@@ -1,0 +1,50 @@
+const { MongoClient } = require("mongodb");
+const url =
+  "mongodb+srv://hoaitruong:UtCung13@cluster0.mevlx.mongodb.net/halkeeping?retryWrites=true&w=majority";
+const client = new MongoClient(
+  url,
+  { useUnifiedTopology: true },
+  { useNewUrlParser: true },
+  { connectTimeoutMS: 30000 },
+  { keepAlive: 1 }
+);
+let mongodb;
+
+async function connect(callback) {
+  //   mongoClient.connect(mongoDbUrl, (err, db) => {
+  //     mongodb = db;
+  //     console.log("mongodb ===> ", mongodb);
+  //   });
+  try {
+    const connected = await client.connect();
+
+    mongodb = connected.db("halkeeping");
+    // const dbo = connected.db('halkeeping');
+    // dbo.createCollection('user', function (err, res) {
+    //   if (err) throw err;
+    //   console.log('Collection created!');
+    //   connected.close();
+    // });
+
+    console.log("Connected correctly to server");
+    callback();
+  } catch (err) {
+    console.log(err.stack);
+  }
+  //   finally {
+  //     await client.close();
+  //   }
+}
+function get() {
+  return mongodb;
+}
+
+function close() {
+  client.close();
+}
+
+module.exports = {
+  connect,
+  get,
+  close,
+};
