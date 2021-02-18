@@ -1,8 +1,12 @@
 /** @format */
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+const ROLE = {
+  1: "admin",
+  2: "mode",
+};
 const userSchema = new Schema(
   {
     username: {
@@ -24,9 +28,21 @@ const userSchema = new Schema(
     birthday: {
       type: Date,
     },
+    role: {
+      type: Number,
+      default: 2,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now(),
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now(),
+    },
   },
-  { timestamps: true }
+  { timestamps: { createdAt: true, updatedAt: true } }
 );
-
-const User = mongoose.model('User', userSchema);
+userSchema.set("timestamps", true);
+const User = mongoose.model("User", userSchema);
 module.exports = User;

@@ -4,12 +4,6 @@ const User = require("./../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("./../db");
-// const mongoose = require("mongoose");
-// const url =
-//   "mongodb+srv://hoaitruong:UtCung13@cluster0.mevlx.mongodb.net/halkeeping?retryWrites=true&w=majority";
-
-// mongoose.connect(url);
-
 // class User {
 //   constructor(db) {
 //     this.collection = db.collection("users");
@@ -22,52 +16,101 @@ const db = require("./../db");
 // module.exports = User;
 
 const register = (req, res, next) => {
-  bcrypt.hash(req.body.password, 10, function (err, hashedPass) {
-    if (err) {
-      res.json({
-        error: err,
+  // find existing email, if it's existing, return an error
+  db.get()
+    .collection("users")
+    .findOne({
+      $or: [
+        {
+          username: req.body.username,
+        },
+        { email: req.body.email },
+      ],
+    })
+    .then((item) => {
+      console.log("item !!! ===> ", item);
+      if (item) {
+        res.send({
+          data: {
+            error: 1,
+            message: "Username or email is used",
+          },
+        });
+        return;
+      }
+      if (!req.body.username || !req.body.password || !req.body.email) {
+        res.send({
+          data: {
+            error: 1,
+            message: "Username or email or password is not null",
+          },
+        });
+        return;
+      }
+      bcrypt.hash(req.body.password, 10, function (err, hashedPass) {
+        if (err) {
+          res.json({
+            error: err,
+          });
+        }
+
+        let user = new User({
+          username: req.body.username,
+          password: hashedPass,
+          email: req.body.email,
+          phone: req.body.phone,
+          birthday: req.body.birthday,
+        });
+        console.log("user ====> ", user);
+        console.log("db====> ", db);
+        try {
+          db.get()
+            .collection("users")
+            .insertOne(user)
+            .then(() => {
+              res.send({
+                data: {
+                  error: 0,
+                  message: "Register successfully",
+                },
+              });
+            });
+        } catch (error) {
+          console.log(error);
+        }
       });
-    }
-
-    let user = new User({
-      username: req.body.username,
-      password: hashedPass,
-      email: req.body.email,
-      phone: req.body.phone,
-      birthday: req.body.birthday,
     });
-    console.log("user ====> ", user);
-    console.log("db====> ", db);
-    try {
-      db.get().collection("users").insertOne(user);
-    } catch (error) {
-      console.log(error);
-    }
-
-    // const client = app.client;
-
-    // const database = client.db('sample_mflix');
-    // const collection = database.collection('movies');
-
-    // console.log('client ', client);
-    // console.log('database ', database);
-    // console.log('collection ', collection);
-    //   user
-    //     .save()
-    //     .then((user) => {
-    //       res.json({
-    //         message: "User added successfully",
-    //       });
-    //     })
-    //     .catch((err) => {
-    //       console.log("errr ===> ", err);
-    //       res.json({
-    //         message: "An error occured!",
-    //       });
-    //     });
-  });
 };
+
+function login(req, res, next) {
+  db.get()
+    .collection("users")
+    .findOne(
+      {
+        email: req.body.email,
+      },
+      function (err, user) {
+        console.log("user ===> ", user);
+        if (err) throw err;
+        if (!user || !bcrypt.compare(req.body.password, user.password)) {
+          return res.status(401).json({
+            message: "Authentication failed. Invalid user or password.",
+          });
+        }
+        return res.json({
+          data: {
+            error: 0,
+            token: jwt.sign(
+              { email: user.email, fullName: user.fullName, _id: user._id },
+              "RESTFULAPIs"
+            ),
+          },
+        });
+      }
+    );
+}
 
 module.exports = {
   register,
+  login,
 };
