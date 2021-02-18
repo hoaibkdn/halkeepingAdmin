@@ -5,7 +5,7 @@ jobs:
       - checkout
       - run:
           name: Install npm dependencies
-          comand: |
+          command: |
             npm install --save
 
       - run:
