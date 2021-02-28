@@ -1,17 +1,26 @@
 /** @format */
 
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const db = require("./../db");
-
-const AuthController = require("./../controllers/AuthController");
-router.post("/register", AuthController.register);
-router.get("/users", (req, res) => {
-  const query = { "reviews.0": { $exists: true } };
-  const projection = { _id: "60239b04defa4b706935f5db" };
-  console.log("req with token ", req.user);
+const db = require('./../db');
+const AuthController = require('./../controllers/AuthController');
+router.post('/register', AuthController.register);
+router.get('/users', (req, res) => {
+  const query = { 'reviews.0': { $exists: true } };
+  const projection = { _id: '60239b04defa4b706935f5db' };
+  console.log('req with token ', req.user);
+  if (!req.user) {
+    res.send({
+      data: {
+        error: 1,
+        status: 401,
+        message: 'Unauthorization',
+      },
+    });
+    return;
+  }
   db.get()
-    .collection("users")
+    .collection('users')
     .find({})
     .toArray()
     .then((items) => {
@@ -22,5 +31,6 @@ router.get("/users", (req, res) => {
     })
     .catch((err) => console.error(`Failed to find documents: ${err}`));
 });
-router.post("/login", AuthController.login);
+router.post('/login', AuthController.login);
+router.patch('/user/:userId', AuthController.updateUser);
 module.exports = router;
