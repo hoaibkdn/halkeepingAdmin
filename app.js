@@ -10,6 +10,10 @@ require("dotenv").config();
 const bodyParser = require("body-parser");
 const postsRoute = require("./routes/posts");
 const authRoute = require("./routes/auth");
+const cleanerRoute = require("./routes/cleaner");
+const customerRoute = require("./routes/customer");
+const jobRoute = require("./routes/job");
+const utils = require("./utils");
 const db = require("./db");
 const url =
   "mongodb+srv://hoaitruong:UtCung13@cluster0.mevlx.mongodb.net/halkeeping?retryWrites=true&w=majority";
@@ -40,7 +44,8 @@ app.use(function (req, res, next) {
     );
   } else {
     req.user = undefined;
-    next();
+    utils.checkAuthorization(req, res);
+    // next();
   }
 });
 // async function run() {
@@ -66,9 +71,76 @@ app.use(function (req, res, next) {
 
 // listen
 // app.listen(3000);
+
+// -------MARK & SWEEP ----------
+
+// let HEAP = [];
+
+// const A = {
+//   languague: "Javascript",
+// };
+// HEAP.push(A);
+// const root = () => HEAP[0];
+
+// const B = {
+//   languague: "Rust",
+// };
+
+// HEAP.push(B);
+// A.B = B;
+// const C = {
+//   languague: "Elm",
+// };
+
+// HEAP.push(C);
+
+// A.C = C;
+
+// delete A.C;
+
+// const D = {
+//   languague: "Golang",
+// };
+
+// HEAP.push(D);
+// B.D = D;
+
+// const mark = () => {
+//   let reachables = [root()];
+//   while (reachables.length) {
+//     let current = reachables.pop();
+//     if (!current.__markBit__) {
+//       current.__markBit__ = 1;
+
+//       for (let i in current) {
+//         if (typeof current[i] === "object") {
+//           reachables.push(current[i]);
+//         }
+//       }
+//     }
+//   }
+// };
+
+// const sweep = () => {
+//   HEAP = HEAP.filter((current) => {
+//     if (current.__markBit__ === 1) {
+//       current.__markBit__ === 0;
+//       return true;
+//     }
+//     return false;
+//   });
+// };
+
 db.connect(() => {
   app.listen(process.env.PORT || 3000, function () {
     app.use("/api", authRoute);
+    app.use("/api/cleaner", cleanerRoute);
+    app.use("/api/customer", customerRoute);
+    app.use("/api/job", jobRoute);
+    // console.log("HEAP state before ", HEAP);
+    // mark();
+    // sweep();
+    // console.log("HEAP state after ", HEAP);
   });
 });
 // module.exports = {
