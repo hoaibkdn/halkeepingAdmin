@@ -27,6 +27,10 @@ app.get("/", (req, res) => {
 });
 
 app.use(function (req, res, next) {
+  if(req.url === '/api/login') {
+    next();
+    return
+  }
   if (
     req.headers &&
     req.headers.authorization &&
