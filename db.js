@@ -1,6 +1,7 @@
 const { MongoClient } = require("mongodb");
-const url =
-  "mongodb+srv://hoaitruong:UtCung13@cluster0.mevlx.mongodb.net/halkeeping?retryWrites=true&w=majority";
+// const url =
+//   "mongodb+srv://hoaitruong:UtCung13@cluster0.mevlx.mongodb.net/halkeeping?retryWrites=true&w=majority";
+const url = 'mongodb+srv://halStorm:UtCung13@cluster0.k4irp.mongodb.net/halgroup?retryWrites=true&w=majority'
 const client = new MongoClient(
   url,
   { useUnifiedTopology: true },
@@ -17,14 +18,13 @@ async function connect(callback) {
   //   });
   try {
     const connected = await client.connect();
+    if(url.includes('halkeeping')) {
+      mongodb = connected.db("halkeeping");
 
-    mongodb = connected.db("halkeeping");
-    // const dbo = connected.db('halkeeping');
-    // dbo.createCollection('user', function (err, res) {
-    //   if (err) throw err;
-    //   console.log('Collection created!');
-    //   connected.close();
-    // });
+    }
+    else {
+      mongodb = connected.db("halgroup"); 
+    }
 
     console.log("Connected correctly to server");
     callback();

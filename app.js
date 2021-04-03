@@ -13,12 +13,13 @@ const authRoute = require("./routes/auth");
 const cleanerRoute = require("./routes/cleaner");
 const customerRoute = require("./routes/customer");
 const jobRoute = require("./routes/job");
+const sectionRoute = require("./routes/section");
 const utils = require("./utils");
 const db = require("./db");
-const url =
-  "mongodb+srv://hoaitruong:UtCung13@cluster0.mevlx.mongodb.net/halkeeping?retryWrites=true&w=majority";
+// const url =
+//   "mongodb+srv://hoaitruong:UtCung13@cluster0.mevlx.mongodb.net/halkeeping?retryWrites=true&w=majority";
 
-const client = new MongoClient(url);
+// const client = new MongoClient(url);
 
 app.use(bodyParser.json());
 
@@ -27,7 +28,7 @@ app.get("/", (req, res) => {
 });
 
 app.use(function (req, res, next) {
-  if(req.url === '/api/login') {
+  if(req.url === '/api/login' || req.url === '/api/register') {
     next();
     return
   }
@@ -141,6 +142,7 @@ db.connect(() => {
     app.use("/api/cleaner", cleanerRoute);
     app.use("/api/customer", customerRoute);
     app.use("/api/job", jobRoute);
+    app.use('/api/sections', sectionRoute)
     // console.log("HEAP state before ", HEAP);
     // mark();
     // sweep();

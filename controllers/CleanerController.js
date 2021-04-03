@@ -5,6 +5,16 @@ const db = require("./../db");
 var ObjectId = require("mongodb").ObjectID;
 
 const addCleaner = function (req, res, next) {
+  console.log("cleaner content ", req);
+  if(!req.body.name) {
+    res.send({
+      data: {
+        error: 1,
+        message: "Data is not empty",
+      },
+    }); 
+    return
+  }
   const cleaner = new Cleaner(req.body);
   try {
     db.get()
