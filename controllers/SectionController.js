@@ -16,36 +16,121 @@ const bucketParams = {
   Bucket: BUCKET_NAME,
 };
 
+
+// { 
+//   Section: 3,
+//   Title: ‘’,
+//   images: [‘url’]
+//   data: [
+//     {
+//         Title: ‘Family’,
+//         Description: [123123123], 
+//  images: [‘’url1, url2]
+//     }, 
+//    {
+//         Title: ‘Family’,
+//         Description: [123123123], 
+//  images: [‘’url1, url2]
+//     }]
+// }
+
+const isAddableSction = async (section) => {
+  const item = await db.get()
+  .collection('section')
+  .findOne({
+    $or: [{
+      section
+    }]
+  })
+  console.log('item ====> ', item);
+  if(item) {
+    return false
+  }
+  return true
+}
+
 const addDataSection = async (req, res) => {
+  const REGEX_NUM = /\d+/g
+
   let form = new multiparty.Form();
 
-  let convertedData = {}
-  let s3Params = []
-  let isUploadingError = false
-  
-  form.parse(req, function(err, fields, files) {
-    console.log('ERORR',err);
-    console.log('fields ===> ', fields);
-    console.log('file ===> ', files);
+  let convertedData = {
+    section: 0,
+    title: '',
+    description: '',
+    images: [],
+    data: []
+  }
 
-    Object.keys(fields).forEach(function(name) {
-      console.log('got field named ' + name);
-      convertedData[name] = fields[name] ? fields[name][0] : '';
-    });
-    
+  // let s3Params = []
+  let s3Params = { 0: []}
+  let isUploadingError = false
+  let isValidInsert = true 
+  form.parse(req, async function(err, fields, files) {
+    const fieldsArr = Object.keys(fields)
+    for(let i = 0; i < fieldsArr.length; i++) {
+      const name = fieldsArr[i]
+
+      // Check isAddableSction
+      if(name === 'section' && !await isAddableSction(fields[name][0])) {
+        isValidInsert = false 
+        res.send({
+          data: {
+            error: 1,
+            message: 'Your section name has used, please use another name'
+          }
+        })
+        return 
+      }
+      const numbers = name.match(REGEX_NUM) || []
+      // title, description, section
+      if(numbers.length < 1) {
+        convertedData[name] = fields[name] ? fields[name][0] : '';
+      }
+      // title_1, description_1
+      if(numbers.length === 1) {
+        const label = name.split('_')[0]
+        const index = Number(name.split('_')[1])
+        if(convertedData.data[index - 1]) {
+          convertedData.data[index - 1] = {
+            ...convertedData.data[index - 1],
+            [label]: fields[name] ? fields[name][0] : '',
+          } 
+        } else {
+          convertedData.data.push({
+            [label]: fields[name] ? fields[name][0] : '' ,
+            images: []
+          }) 
+
+        }
+      }
+    }
+
     Object.values(files).forEach(function(fileArr) {
-      console.log('fileArr ===> ', fileArr);
       const file = fileArr[0]
+      const numbers = file.fieldName.match(REGEX_NUM) || []
       const fileName = file.path
       const fileContent = fs.readFileSync(fileName)
-      s3Params.push({
+      const param = {
         Bucket: BUCKET_NAME,
         Key: file.originalFilename, // File name you want to save as in S3
         Body: fileContent,
         ACL: 'public-read',
-      })
+      } 
+      // image_1, image_2 => common in the section, put at 0
+      if(numbers.length === 1) {
+        s3Params[0] = s3Params[0].concat(param)
+      } else { // image_1_1, image_1_2 for each content 
+        if (s3Params[numbers[0]]) {
+          s3Params[numbers[0]].push(param) 
+        } else {
+          s3Params = {
+            ...s3Params, 
+            [numbers[0]]: [param] 
+          }
+        }
+      }
     })
-    console.log('s3Params @@@ ==> ', s3Params);
     const getUploadPromise = function(param) {
       return s3.upload(param, function(err, data) {
         if (err) {
@@ -54,24 +139,43 @@ const addDataSection = async (req, res) => {
         console.log(`File uploaded successfully. ${data.Location}`); // data.Location = https://halgroup.s3.amazonaws.com/
       }).promise();
     }
+    
+    // { 0: [param, param], 1: [param, param]}
     // Upload images to S3
-    Promise.all(s3Params.map(getUploadPromise)).then((values) => {
-      console.log('values ---- ', values);
+    const s3ParamsArray = Object.values(s3Params).reduce((total, item) => {
+      const mergedArr = total.concat(item)
+      return mergedArr
+    }, [])
+    Promise.all(s3ParamsArray.map(getUploadPromise)).then((values) => {
+      let currentArrUploadedImg = 0
+      let trackingParams = {}
       values.forEach((item, index) => {
-        if(convertedData.images) {
-          convertedData.images[index] = item.Location 
+        if(s3Params[0] && s3Params[0].length > index) {
+          convertedData.images.push(item.Location)
+          currentArrUploadedImg = s3Params[0].length // 2
+          trackingParams[0] = s3Params[0].length 
+        } else {
+          Object.keys(s3Params).forEach((key) => {
+            const keyNum = Number(key)
+
+            if(keyNum > 0 && s3Params[key].length + currentArrUploadedImg > index && index >= currentArrUploadedImg && (!trackingParams[key] || trackingParams[key] < s3Params[key].length)) {
+              if(convertedData.data[keyNum - 1]) {
+                convertedData.data[keyNum - 1].images.push(item.Location)
+              } else {
+                convertedData.data = convertedData.data.concat({ images: [item.Location] }) 
+              }
+              currentArrUploadedImg++
+              if(trackingParams[key]) {
+                trackingParams[key]++ 
+              } else {
+                trackingParams = {...trackingParams, [key]: 1} 
+              }
+            }
+          })
         }
-        else {
-          convertedData = {
-            ...convertedData,
-            images: {
-              [index]: item.Location 
-            } 
-          }
-        } 
+        
       })
       // Save data to db
-      console.log("convertedData ====2222 ", convertedData);
       if(String(convertedData) === '{}') {
         res.send({
           data: {
