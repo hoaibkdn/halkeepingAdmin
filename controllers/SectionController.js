@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const fs = require('fs');
+const sharp = require("sharp");
 const multiparty = require('multiparty')
 const ID = 'AKIATB3XFCKT53CSXUH5';
 const SECRET = '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';
@@ -16,6 +17,13 @@ const bucketParams = {
   Bucket: BUCKET_NAME,
 };
 
+
+const resizeImages = async (file, filename ) => {
+  return await sharp(file)
+  .toFormat("jpeg")
+  .jpeg({ quality: 40 })
+  .toBuffer()
+};
 
 // { 
 //   Section: 3,
@@ -42,7 +50,6 @@ const isAddableSction = async (section) => {
       section
     }]
   })
-  console.log('item ====> ', item);
   if(item) {
     return false
   }
@@ -106,11 +113,17 @@ const addDataSection = async (req, res) => {
       }
     }
 
-    Object.values(files).forEach(function(fileArr) {
-      const file = fileArr[0]
+
+    // Files
+    const filesUpload = Object.values(files)
+    for(let i = 0; i < filesUpload.length; i++) {
+      const file = filesUpload[i] ? filesUpload[i][0] : null
+      if(!file) {
+        continue
+      }
       const numbers = file.fieldName.match(REGEX_NUM) || []
       const fileName = file.path
-      const fileContent = fs.readFileSync(fileName)
+      const fileContent = await resizeImages(fileName, file.originalFilename)
       const param = {
         Bucket: BUCKET_NAME,
         Key: file.originalFilename, // File name you want to save as in S3
@@ -130,7 +143,8 @@ const addDataSection = async (req, res) => {
           }
         }
       }
-    })
+    } 
+
     const getUploadPromise = function(param) {
       return s3.upload(param, function(err, data) {
         if (err) {
