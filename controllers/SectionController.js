@@ -58,7 +58,7 @@ const isAddableSction = async (section) => {
 
 const addDataSection = async (req, res) => {
   const REGEX_NUM = /\d+/g
-
+  const sectionName = req.params.sectionName
   let form = new multiparty.Form();
 
   let convertedData = {
@@ -72,15 +72,13 @@ const addDataSection = async (req, res) => {
   // let s3Params = []
   let s3Params = { 0: []}
   let isUploadingError = false
-  let isValidInsert = true 
   form.parse(req, async function(err, fields, files) {
     const fieldsArr = Object.keys(fields)
     for(let i = 0; i < fieldsArr.length; i++) {
       const name = fieldsArr[i]
 
       // Check isAddableSction
-      if(name === 'section' && !await isAddableSction(fields[name][0])) {
-        isValidInsert = false 
+      if(name === 'section' && !await isAddableSction(fields[name][0]) && !sectionName) {
         res.send({
           data: {
             error: 1,
@@ -208,26 +206,7 @@ const addDataSection = async (req, res) => {
         }) 
       } 
       else if(String(convertedData) !== '{}') {
-        try {
-          db.get()
-          .collection("section")
-          .insertOne(convertedData)
-          .then(() => {
-            res.send({
-              data: {
-                error: 0,
-                message: "Added successfully",
-                section: convertedData
-              },
-            });
-          });
-        } catch (error) {
-          res.send({
-            error: 1,
-            message: error.message,
-          });
-          console.log(error);
-        }
+        editSection(sectionName, convertedData, res)
       }
     })
   })
@@ -257,9 +236,95 @@ const getDataSection = (req, res) => {
     })
 }
 
+const editSection = (sectionName, convertedData, res) => {
+  const insertSection = () => {
+    db.get()
+      .collection("section")
+      .insertOne(convertedData)
+      .then(() => {
+        res.send({
+          data: {
+            error: 0,
+            message: "Added successfully",
+            section: convertedData
+          },
+        });
+      }); 
+  }
+  if(!sectionName) {
+    return insertSection()
+  }
+  try {
+    db.get()
+    .collection("section")
+    .findOne({
+      section: sectionName
+    }, async function(err, section) {
+      if(!section) { // create new section
+        insertSection();
+      } else {
+        const result = await db
+          .get()
+          .collection('section')
+          .updateOne(
+            {
+              section: sectionName,
+            },
+            {
+              $set: convertedData,
+            },
+            { upsert: true }
+          );
+        if (result.matchedCount === 1) {
+          res.send({
+            data: {
+              error: 0,
+              message: 'Updated successfully',
+              convertedData
+            },
+          });
+          return;
+        }
+        res.send({
+          data: {
+            error: 1,
+            message: 'There is an error occur',
+          },
+        }); 
+      }
+    })
+  } catch (error) {
+    res.send({
+      error: 1,
+      message: error.message,
+    });
+    console.log(error);
+  } 
+}
+
+async function removeSection(req, res) {
+  const sectionName = req.params.sectionName
+  if(sectionName) {
+    await db.get().collection("section").deleteOne( { section: sectionName }, true )
+    res.send({
+      data: {
+        error: 0,
+        message: 'Delete successfully',
+      },
+    }); 
+    return 
+  }
+  res.send({
+    data: {
+      error: 1,
+      message: 'No section name',
+    },
+  }); 
+}
 
 module.exports = {
   addDataSection,
-  getDataSection
+  getDataSection,
+  removeSection
 };
   

@@ -7,5 +7,7 @@ const SectionController = require("../controllers/SectionController");
 
 router.post("/add-section", SectionController.addDataSection);
 router.get("/get-section/:sectionName", SectionController.getDataSection);
+router.post("/edit-section/:sectionName", SectionController.addDataSection);
+router.delete("/remove/:sectionName", SectionController.removeSection);
 
 module.exports = router;
