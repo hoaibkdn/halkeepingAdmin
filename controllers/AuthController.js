@@ -1,10 +1,15 @@
 /** @format */
 
-const User = require('./../models/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const db = require('./../db');
-var ObjectId = require('mongodb').ObjectID;
+const User = require("./../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const db = require("./../db");
+var ObjectId = require("mongodb").ObjectID;
+
+const generateWebId = (email) => {
+  const firstPartEmail = email.split("@")[0];
+  return firstPartEmail + Math.random();
+};
 // class User {
 //   constructor(db) {
 //     this.collection = db.collection("users");
@@ -19,7 +24,7 @@ var ObjectId = require('mongodb').ObjectID;
 const register = (req, res, next) => {
   // find existing email, if it's existing, return an error
   db.get()
-    .collection('users')
+    .collection("users")
     .findOne({
       $or: [
         {
@@ -29,12 +34,12 @@ const register = (req, res, next) => {
       ],
     })
     .then((item) => {
-      console.log('item !!! ===> ', item);
+      console.log("item !!! ===> ", item);
       if (item) {
         res.send({
           data: {
             error: 1,
-            message: 'Username or email is used',
+            message: "Username or email is used",
           },
         });
         return;
@@ -43,7 +48,7 @@ const register = (req, res, next) => {
         res.send({
           data: {
             error: 1,
-            message: 'Username or email or password is not null',
+            message: "Username or email or password is not null",
           },
         });
         return;
@@ -62,17 +67,15 @@ const register = (req, res, next) => {
           phone: req.body.phone,
           birthday: req.body.birthday,
         });
-        console.log('user ====> ', user);
-        console.log('db====> ', db);
         try {
           db.get()
-            .collection('users')
+            .collection("users")
             .insertOne(user)
             .then(() => {
               res.send({
                 data: {
                   error: 0,
-                  message: 'Register successfully',
+                  message: "Register successfully",
                 },
               });
             });
@@ -85,17 +88,17 @@ const register = (req, res, next) => {
 
 function login(req, res, next) {
   db.get()
-    .collection('users')
+    .collection("users")
     .findOne(
       {
         email: req.body.email,
       },
       function (err, user) {
-        console.log('user ===> ', user);
+        console.log("user ===> ", user);
         if (err) throw err;
         if (!user || !bcrypt.compare(req.body.password, user.password)) {
           return res.status(401).json({
-            message: 'Authentication failed. Invalid user or password.',
+            message: "Authentication failed. Invalid user or password.",
           });
         }
         return res.json({
@@ -103,7 +106,7 @@ function login(req, res, next) {
             error: 0,
             token: jwt.sign(
               { email: user.email, fullName: user.fullName, _id: user._id },
-              'RESTFULAPIs'
+              "RESTFULAPIs"
             ),
           },
         });
@@ -115,7 +118,7 @@ async function updateUser(req, res, next) {
   const updatedData = { ...req.body };
   if (req.body.email) {
     db.get()
-      .collection('users')
+      .collection("users")
       .findOne(
         {
           email: req.body.email,
@@ -125,7 +128,7 @@ async function updateUser(req, res, next) {
             return res.json({
               data: {
                 error: 1,
-                message: 'The email is used. Please use another email',
+                message: "The email is used. Please use another email",
               },
             });
           } else {
@@ -146,7 +149,7 @@ async function updateUser(req, res, next) {
   }
   const result = await db
     .get()
-    .collection('users')
+    .collection("users")
     .updateOne(
       {
         _id: new ObjectId(req.params.userId),
@@ -160,7 +163,7 @@ async function updateUser(req, res, next) {
     res.send({
       data: {
         error: 0,
-        message: 'Updated successfully',
+        message: "Updated successfully",
       },
     });
     return;
@@ -168,7 +171,7 @@ async function updateUser(req, res, next) {
   res.send({
     data: {
       error: 1,
-      message: 'There is an error occur',
+      message: "There is an error occur",
     },
   });
 }

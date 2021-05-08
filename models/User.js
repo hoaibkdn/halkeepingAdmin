@@ -32,6 +32,10 @@ const userSchema = new Schema(
       type: Number,
       default: 2,
     },
+    webId: {
+      type: String,
+      required: true,
+    },
     createdAt: {
       type: Date,
       default: Date.now(),
