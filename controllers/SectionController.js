@@ -2,6 +2,8 @@ const AWS = require("aws-sdk");
 const nodemailer = require("nodemailer");
 const sharp = require("sharp");
 const multiparty = require("multiparty");
+
+const ObjectId = require("mongodb").ObjectID;
 const ID = "AKIATB3XFCKT53CSXUH5";
 const SECRET = "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";
 const db = require("../db");
@@ -61,6 +63,7 @@ const addDataSection = async (req, res) => {
   let form = new multiparty.Form();
 
   let convertedData = {
+    userId: new ObjectId(req.user._id),
     section: 0,
     title: "",
     description: "",
@@ -228,6 +231,7 @@ const getDataSection = (req, res) => {
     .findOne(
       {
         section: req.params.sectionName,
+        userId: new ObjectId(req.user._id),
       },
       function (err, section) {
         if (err) {

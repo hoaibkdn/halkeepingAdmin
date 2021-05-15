@@ -23,14 +23,24 @@ const db = require("./db");
 
 app.use(bodyParser.json());
 
-app.get("/", (req, res) => {
-  res.send("We posting");
-});
-
 app.use(function (req, res, next) {
-  if(req.url === '/api/login' || req.url === '/api/register') {
+  const allowedOrigins = [
+    "http://localhost:3001",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+  ];
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  //res.header('Access-Control-Allow-Origin', 'http://127.0.0.1:8020');
+  res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", true);
+
+  if (req.url === "/api/login" || req.url === "/api/register") {
     next();
-    return
+    return;
   }
   if (
     req.headers &&
@@ -142,7 +152,7 @@ db.connect(() => {
     app.use("/api/cleaner", cleanerRoute);
     app.use("/api/customer", customerRoute);
     app.use("/api/job", jobRoute);
-    app.use('/api/sections', sectionRoute)
+    app.use("/api/sections", sectionRoute);
     // console.log("HEAP state before ", HEAP);
     // mark();
     // sweep();

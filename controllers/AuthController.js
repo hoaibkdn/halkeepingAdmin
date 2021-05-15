@@ -10,17 +10,11 @@ const generateWebId = (email) => {
   const firstPartEmail = email.split("@")[0];
   return firstPartEmail + Math.random();
 };
-// class User {
-//   constructor(db) {
-//     this.collection = db.collection("users");
-//   }
-//   async addUser(user) {
-//     const newUser = await this.collection.insertOne(user);
-//     return newUser;
-//   }
-// }
-// module.exports = User;
 
+// {
+//   email: "a@gmail.com",
+//   password: "xxxx"
+// }
 const register = (req, res, next) => {
   // find existing email, if it's existing, return an error
   db.get()
@@ -44,11 +38,11 @@ const register = (req, res, next) => {
         });
         return;
       }
-      if (!req.body.username || !req.body.password || !req.body.email) {
+      if (!req.body.password || !req.body.email) {
         res.send({
           data: {
             error: 1,
-            message: "Username or email or password is not null",
+            message: "Email or password is not null",
           },
         });
         return;
