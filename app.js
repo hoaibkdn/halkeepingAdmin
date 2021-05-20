@@ -28,7 +28,7 @@ app.use(function (req, res, next) {
     "http://localhost:3001",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://hal-big-practice.web.app/",
+    "https://hal-big-practice.web.app",
   ];
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
