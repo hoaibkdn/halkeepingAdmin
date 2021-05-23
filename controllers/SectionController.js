@@ -231,7 +231,7 @@ const getDataSection = (req, res) => {
     .findOne(
       {
         section: req.params.sectionName,
-        userId: new ObjectId(req.user._id),
+        // userId: new ObjectId(req.user._id),
       },
       function (err, section) {
         if (err) {
