@@ -39,7 +39,11 @@ app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.header("Access-Control-Allow-Credentials", true);
 
-  if (req.url === "/api/login" || req.url === "/api/register") {
+  if (
+    req.url === "/api/login" ||
+    req.url === "/api/register" ||
+    req.url.includes("api/sections")
+  ) {
     next();
     return;
   }
