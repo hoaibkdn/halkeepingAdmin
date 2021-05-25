@@ -24,18 +24,17 @@ const db = require("./db");
 app.use(bodyParser.json());
 
 app.use(function (req, res, next) {
-  const allowedOrigins = [
-    "http://localhost:3001",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://hal-big-practice.web.app",
-  ];
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
+  // const allowedOrigins = [
+  //   "http://localhost:3001",
+  //   "http://localhost:3000",
+  //   "http://127.0.0.1:3000",
+  //   "https://hal-big-practice.web.app",
+  // ];
+  // const origin = req.headers.origin;
+  // console.log("origin ===> ", origin);
+  res.setHeader("Access-Control-Allow-Origin", "*");
   //res.header('Access-Control-Allow-Origin', 'http://127.0.0.1:8020');
-  res.header("Access-Control-Allow-Methods", "GET, POST");
+  res.header("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.header("Access-Control-Allow-Credentials", true);
 

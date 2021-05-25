@@ -59,11 +59,10 @@ const isAddableSction = async (section) => {
 
 const addDataSection = async (req, res) => {
   const REGEX_NUM = /\d+/g;
-  const sectionName = req.params.sectionName;
+  let sectionName = "";
   let form = new multiparty.Form();
 
   let convertedData = {
-    userId: new ObjectId(req.user._id),
     section: 0,
     title: "",
     description: "",
@@ -75,75 +74,80 @@ const addDataSection = async (req, res) => {
   let s3Params = { 0: [] };
   let isUploadingError = false;
   form.parse(req, async function (err, fields, files) {
-    const fieldsArr = Object.keys(fields);
-    for (let i = 0; i < fieldsArr.length; i++) {
-      const name = fieldsArr[i];
+    if (fields) {
+      const fieldsArr = Object.keys(fields);
+      for (let i = 0; i < fieldsArr.length; i++) {
+        const name = fieldsArr[i];
+        if (name === "section") {
+          sectionName = req.headers.origin + fields[name][0];
+          convertedData.section = sectionName;
+        }
+        // Check isAddableSction
+        const isAddableSec = await isAddableSction(sectionName);
 
-      // Check isAddableSction
-      if (
-        name === "section" &&
-        !(await isAddableSction(fields[name][0])) &&
-        !sectionName
-      ) {
-        res.send({
-          data: {
-            error: 1,
-            message: "Your section name has used, please use another name",
-          },
-        });
-        return;
-      }
-      const numbers = name.match(REGEX_NUM) || [];
-      // title, description, section
-      if (numbers.length < 1) {
-        convertedData[name] = fields[name] ? fields[name][0] : "";
-      }
-      // title_1, description_1
-      if (numbers.length === 1) {
-        const label = name.split("_")[0];
-        const index = Number(name.split("_")[1]);
-        if (convertedData.data[index - 1]) {
-          convertedData.data[index - 1] = {
-            ...convertedData.data[index - 1],
-            [label]: fields[name] ? fields[name][0] : "",
-          };
-        } else {
-          convertedData.data.push({
-            [label]: fields[name] ? fields[name][0] : "",
-            images: [],
+        if (name === "section" && !isAddableSec) {
+          res.send({
+            data: {
+              error: 1,
+              message: "Your section name has used, please use another name",
+            },
           });
+          return;
+        }
+        const numbers = name.match(REGEX_NUM) || [];
+        // title, description, section
+        if (numbers.length < 1 && name !== "section") {
+          convertedData[name] = fields[name] ? fields[name][0] : "";
+        }
+        // title_1, description_1
+        if (numbers.length === 1) {
+          const label = name.split("_")[0];
+          const index = Number(name.split("_")[1]);
+          if (convertedData.data[index - 1]) {
+            convertedData.data[index - 1] = {
+              ...convertedData.data[index - 1],
+              [label]: fields[name] ? fields[name][0] : "",
+            };
+          } else {
+            convertedData.data.push({
+              [label]: fields[name] ? fields[name][0] : "",
+              images: [],
+            });
+          }
         }
       }
     }
 
     // Files
-    const filesUpload = Object.values(files);
-    for (let i = 0; i < filesUpload.length; i++) {
-      const file = filesUpload[i] ? filesUpload[i][0] : null;
-      if (!file) {
-        continue;
-      }
-      const numbers = file.fieldName.match(REGEX_NUM) || [];
-      const fileName = file.path;
-      const fileContent = await resizeImages(fileName, file.originalFilename);
-      const param = {
-        Bucket: BUCKET_NAME,
-        Key: file.originalFilename, // File name you want to save as in S3
-        Body: fileContent,
-        ACL: "public-read",
-      };
-      // image_1, image_2 => common in the section, put at 0
-      if (numbers.length === 1) {
-        s3Params[0] = s3Params[0].concat(param);
-      } else {
-        // image_1_1, image_1_2 for each content
-        if (s3Params[numbers[0]]) {
-          s3Params[numbers[0]].push(param);
+    if (files) {
+      const filesUpload = Object.values(files);
+      for (let i = 0; i < filesUpload.length; i++) {
+        const file = filesUpload[i] ? filesUpload[i][0] : null;
+        if (!file) {
+          continue;
+        }
+        const numbers = file.fieldName.match(REGEX_NUM) || [];
+        const fileName = file.path;
+        const fileContent = await resizeImages(fileName, file.originalFilename);
+        const param = {
+          Bucket: BUCKET_NAME,
+          Key: file.originalFilename, // File name you want to save as in S3
+          Body: fileContent,
+          ACL: "public-read",
+        };
+        // image_1, image_2 => common in the section, put at 0
+        if (numbers.length === 1) {
+          s3Params[0] = s3Params[0].concat(param);
         } else {
-          s3Params = {
-            ...s3Params,
-            [numbers[0]]: [param],
-          };
+          // image_1_1, image_1_2 for each content
+          if (s3Params[numbers[0]]) {
+            s3Params[numbers[0]].push(param);
+          } else {
+            s3Params = {
+              ...s3Params,
+              [numbers[0]]: [param],
+            };
+          }
         }
       }
     }
@@ -231,7 +235,6 @@ const getDataSection = (req, res) => {
     .findOne(
       {
         section: req.params.sectionName,
-        // userId: new ObjectId(req.user._id),
       },
       function (err, section) {
         if (err) {
@@ -369,7 +372,6 @@ function sendEmail(req, res) {
 
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {
-      console.log(error);
       res.send({
         data: {
           error: 1,
@@ -377,7 +379,6 @@ function sendEmail(req, res) {
         },
       });
     } else {
-      console.log("Email sent: " + info.response);
       res.send({
         data: {
           error: 0,
