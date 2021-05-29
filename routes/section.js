@@ -2,21 +2,15 @@
 
 const express = require("express");
 const router = express.Router();
-const db = require("../db");
 const SectionController = require("../controllers/SectionController");
-const cors = require("cors");
 
-router.post("/add-section", cors(), SectionController.addDataSection);
+router.post("/add-section", SectionController.addDataSection);
+router.get("/get-section/:sectionName", SectionController.getDataSection);
 router.get(
-  "/get-section/:sectionName",
-  cors(),
-  SectionController.getDataSection
+  "/get-batch-sections/:sections",
+  SectionController.getBatchOfSections
 );
-router.post(
-  "/edit-section/:sectionName",
-  cors(),
-  SectionController.addDataSection
-);
-router.delete("/remove/:sectionName", cors(), SectionController.removeSection);
-router.post("/send-email", cors(), SectionController.sendEmail);
+router.put("/edit-section/:sectionName", SectionController.updateSection);
+router.delete("/remove/:sectionName", SectionController.removeSection);
+router.post("/send-email", SectionController.sendEmail);
 module.exports = router;

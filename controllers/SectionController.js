@@ -9,6 +9,7 @@ const SECRET = "Pgsjvujo58xIC5WrwqnYtVGqDaUgUs09o7dEQOAU";
 const db = require("../db");
 // The name of the bucket that you have created
 const BUCKET_NAME = "halgroup";
+const REGEX_NUM = /\d+/g;
 
 const s3 = new AWS.S3({
   accessKeyId: ID,
@@ -22,23 +23,6 @@ const bucketParams = {
 const resizeImages = async (file, filename) => {
   return await sharp(file).toFormat("jpeg").jpeg({ quality: 40 }).toBuffer();
 };
-
-// {
-//   Section: 3,
-//   Title: ‘’,
-//   images: [‘url’]
-//   data: [
-//     {
-//         Title: ‘Family’,
-//         Description: [123123123],
-//  images: [‘’url1, url2]
-//     },
-//    {
-//         Title: ‘Family’,
-//         Description: [123123123],
-//  images: [‘’url1, url2]
-//     }]
-// }
 
 const isAddableSction = async (section) => {
   const item = await db
@@ -57,9 +41,100 @@ const isAddableSction = async (section) => {
   return true;
 };
 
-const addDataSection = async (req, res) => {
-  const REGEX_NUM = /\d+/g;
-  let sectionName = "";
+function convertDataSection(fields) {
+  let convertedData = {
+    section: "",
+    title: "",
+    description: "",
+    images: [],
+    data: [],
+    videos: [],
+  };
+
+  const fieldsArr = Object.keys(fields);
+  for (let i = 0; i < fieldsArr.length; i++) {
+    const name = fieldsArr[i];
+    if (name === "section") {
+      convertedData.section = fields[name][0]; // set the mapping origin and section name;
+    }
+    const numbers = name.match(REGEX_NUM) || [];
+    // title, description, section, video
+    if (numbers.length < 1 && name !== "section") {
+      convertedData[name] = fields[name] ? fields[name][0] : "";
+    }
+    // title_1, description_1, video_1
+    if (numbers.length === 1) {
+      const label = name.split("_")[0];
+      const index = Number(name.split("_")[1]);
+      if (convertedData.data[index - 1]) {
+        convertedData.data[index - 1] = {
+          ...convertedData.data[index - 1],
+          [label]: fields[name] ? fields[name][0] : "",
+        };
+      } else {
+        convertedData.data.push({
+          [label]: fields[name] ? fields[name][0] : "",
+          images: [],
+        });
+      }
+    }
+  }
+  return convertedData;
+}
+
+async function uploadImages(files) {
+  let s3Params = { 0: [] };
+  const filesUpload = Object.values(files);
+  for (let i = 0; i < filesUpload.length; i++) {
+    const file = filesUpload[i] ? filesUpload[i][0] : null;
+    if (!file) {
+      continue;
+    }
+    const numbers = file.fieldName.match(REGEX_NUM) || [];
+    const fileName = file.path;
+    const fileContent = await resizeImages(fileName, file.originalFilename);
+    const param = {
+      Bucket: BUCKET_NAME,
+      Key: file.originalFilename, // File name you want to save as in S3
+      Body: fileContent,
+      ACL: "public-read",
+    };
+    // image_1, image_2 => common in the section, put at 0
+    if (numbers.length === 1) {
+      s3Params[0] = s3Params[0].concat(param);
+    } else {
+      // image_1_1, image_1_2 for each content
+      if (s3Params[numbers[0]]) {
+        s3Params[numbers[0]].push(param);
+      } else {
+        s3Params = {
+          ...s3Params,
+          [numbers[0]]: [param],
+        };
+      }
+    }
+  }
+  return s3Params;
+}
+
+// {
+//   Section: 3,
+//   Title: ‘’,
+//   images: [‘url’]
+//   data: [
+//     {
+//         Title: ‘Family’,
+//         Description: [123123123],
+//  images: [‘’url1, url2]
+//     },
+//    {
+//         Title: ‘Family’,
+//         Description: [123123123],
+//  images: [‘’url1, url2]
+//     }]
+// }
+const checkDataSection = async (req, res, isAddNewSection) => {
+  let sectionName = req.params.sectionName || "";
   let form = new multiparty.Form();
 
   let convertedData = {
@@ -75,81 +150,26 @@ const addDataSection = async (req, res) => {
   let isUploadingError = false;
   form.parse(req, async function (err, fields, files) {
     if (fields) {
-      const fieldsArr = Object.keys(fields);
-      for (let i = 0; i < fieldsArr.length; i++) {
-        const name = fieldsArr[i];
-        if (name === "section") {
-          sectionName = req.headers.origin + fields[name][0];
-          convertedData.section = sectionName;
-        }
-        // Check isAddableSction
-        const isAddableSec = await isAddableSction(sectionName);
+      convertedData = convertDataSection(fields);
+      sectionName = convertedData.section;
 
-        if (name === "section" && !isAddableSec) {
-          res.send({
-            data: {
-              error: 1,
-              message: "Your section name has used, please use another name",
-            },
-          });
-          return;
-        }
-        const numbers = name.match(REGEX_NUM) || [];
-        // title, description, section
-        if (numbers.length < 1 && name !== "section") {
-          convertedData[name] = fields[name] ? fields[name][0] : "";
-        }
-        // title_1, description_1
-        if (numbers.length === 1) {
-          const label = name.split("_")[0];
-          const index = Number(name.split("_")[1]);
-          if (convertedData.data[index - 1]) {
-            convertedData.data[index - 1] = {
-              ...convertedData.data[index - 1],
-              [label]: fields[name] ? fields[name][0] : "",
-            };
-          } else {
-            convertedData.data.push({
-              [label]: fields[name] ? fields[name][0] : "",
-              images: [],
-            });
-          }
-        }
+      // Check isAddableSction
+      const isAddableSec = await isAddableSction(sectionName);
+
+      if (isAddNewSection && !isAddableSec) {
+        res.send({
+          data: {
+            error: 1,
+            message: "Your section name has used, please use another name",
+          },
+        });
+        return;
       }
     }
 
     // Files
     if (files) {
-      const filesUpload = Object.values(files);
-      for (let i = 0; i < filesUpload.length; i++) {
-        const file = filesUpload[i] ? filesUpload[i][0] : null;
-        if (!file) {
-          continue;
-        }
-        const numbers = file.fieldName.match(REGEX_NUM) || [];
-        const fileName = file.path;
-        const fileContent = await resizeImages(fileName, file.originalFilename);
-        const param = {
-          Bucket: BUCKET_NAME,
-          Key: file.originalFilename, // File name you want to save as in S3
-          Body: fileContent,
-          ACL: "public-read",
-        };
-        // image_1, image_2 => common in the section, put at 0
-        if (numbers.length === 1) {
-          s3Params[0] = s3Params[0].concat(param);
-        } else {
-          // image_1_1, image_1_2 for each content
-          if (s3Params[numbers[0]]) {
-            s3Params[numbers[0]].push(param);
-          } else {
-            s3Params = {
-              ...s3Params,
-              [numbers[0]]: [param],
-            };
-          }
-        }
-      }
+      s3Params = await uploadImages(files);
     }
 
     const getUploadPromise = function (param) {
@@ -223,7 +243,7 @@ const addDataSection = async (req, res) => {
           },
         });
       } else if (String(convertedData) !== "{}") {
-        editSection(sectionName, convertedData, res);
+        insertSectionToDb(sectionName, convertedData, res);
       }
     });
   });
@@ -256,7 +276,50 @@ const getDataSection = (req, res) => {
     );
 };
 
-const editSection = (sectionName, convertedData, res) => {
+const getBatchOfSections = (req, res) => {
+  const sectionParams = req.params.sections;
+  const arraySectionNames = sectionParams ? sectionParams.split(",") : [];
+  if (!arraySectionNames.length) {
+    res.send({
+      data: {
+        error: 1,
+        message: "Your sections are not correct foramat",
+      },
+    });
+    return;
+  }
+  const sectionQuery = arraySectionNames.reduce((result, name) => {
+    result.push({
+      section: name,
+    });
+    return result;
+  }, []);
+  db.get()
+    .collection("section")
+    .find({
+      $or: sectionQuery,
+    })
+    .toArray(function (err, section) {
+      console.log("section ===> ", section);
+      if (err) {
+        res.send({
+          data: {
+            error: 1,
+            message: "Get section error",
+          },
+        });
+        return;
+      }
+      return res.send({
+        data: {
+          error: 0,
+          section,
+        },
+      });
+    });
+};
+
+const insertSectionToDb = (sectionName, convertedData, res) => {
   const insertSection = () => {
     db.get()
       .collection("section")
@@ -322,6 +385,14 @@ const editSection = (sectionName, convertedData, res) => {
     console.log(error);
   }
 };
+
+async function addDataSection(req, res) {
+  checkDataSection(req, res, true);
+}
+
+async function updateSection(req, res) {
+  checkDataSection(req, res, false);
+}
 
 async function removeSection(req, res) {
   const sectionName = req.params.sectionName;
@@ -391,7 +462,11 @@ function sendEmail(req, res) {
 
 module.exports = {
   addDataSection,
+  updateSection,
   getDataSection,
   removeSection,
   sendEmail,
+  checkDataSection,
+  getBatchOfSections,
+  convertDataSection,
 };
