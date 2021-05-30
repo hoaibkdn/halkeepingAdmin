@@ -2,10 +2,13 @@
 
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-// var ObjectId = require("mongodb").ObjectID;
+var ObjectId = require("mongodb").ObjectID;
 
 const productSchema = new Schema(
   {
+    productId: {
+      type: ObjectId,
+    },
     title: {
       type: String,
       required: true,
@@ -22,8 +25,9 @@ const productSchema = new Schema(
       type: String,
       require: true,
     },
-    image: {
-      type: String,
+    images: {
+      type: Array,
+      require: false,
     },
     // {
     //   min: 45000,
@@ -41,9 +45,12 @@ const productSchema = new Schema(
     shopConnection: {
       type: String,
     },
+    tag: {
+      type: String,
+    },
   },
   { timestamps: { createdAt: true, updatedAt: true } }
 );
-sectionSchema.set("timestamps", true);
-const Section = mongoose.model("Section", sectionSchema);
+productSchema.set("timestamps", true);
+const Section = mongoose.model("Section", productSchema);
 module.exports = Section;

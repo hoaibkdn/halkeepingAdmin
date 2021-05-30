@@ -9,6 +9,63 @@ const checkAuthorization = function (req, res) {
   return;
 };
 
+// { 0: [param, param], 1: [param, param]}
+const mergeS3Parram = (s3Params) => {
+  return Object.values(s3Params).reduce((total, item) => {
+    const mergedArr = total.concat(item);
+    return mergedArr;
+  }, []);
+};
+
+/**
+ *
+ * @param {Array} values
+ * values = [{
+ *   Location: string
+ * }]
+ * @param {Object} s3Params
+ *  s3Params = { 0: [] };
+ * @param {Object} convertedData
+ */
+const mapS3ImageToConvertedData = (values, s3Params, convertedData) => {
+  let currentArrUploadedImg = 0;
+  let trackingParams = {};
+  values.forEach((item, index) => {
+    if (s3Params[0] && s3Params[0].length > index) {
+      convertedData.images.push(item.Location);
+      currentArrUploadedImg = s3Params[0].length; // 2
+      trackingParams[0] = s3Params[0].length;
+    } else {
+      Object.keys(s3Params).forEach((key) => {
+        const keyNum = Number(key);
+
+        if (
+          keyNum > 0 &&
+          s3Params[key].length + currentArrUploadedImg > index &&
+          index >= currentArrUploadedImg &&
+          (!trackingParams[key] || trackingParams[key] < s3Params[key].length)
+        ) {
+          if (convertedData.data[keyNum - 1]) {
+            convertedData.data[keyNum - 1].images.push(item.Location);
+          } else {
+            convertedData.data = convertedData.data.concat({
+              images: [item.Location],
+            });
+          }
+          currentArrUploadedImg++;
+          if (trackingParams[key]) {
+            trackingParams[key]++;
+          } else {
+            trackingParams = { ...trackingParams, [key]: 1 };
+          }
+        }
+      });
+    }
+  });
+};
+
 module.exports = {
   checkAuthorization,
+  mergeS3Parram,
+  mapS3ImageToConvertedData,
 };

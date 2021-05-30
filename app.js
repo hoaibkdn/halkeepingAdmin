@@ -8,12 +8,12 @@ const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 const bodyParser = require("body-parser");
-const postsRoute = require("./routes/posts");
 const authRoute = require("./routes/auth");
 const cleanerRoute = require("./routes/cleaner");
 const customerRoute = require("./routes/customer");
 const jobRoute = require("./routes/job");
 const sectionRoute = require("./routes/section");
+const productRoute = require("./routes/product");
 const utils = require("./utils");
 const db = require("./db");
 // const url =
@@ -39,7 +39,9 @@ app.use(function (req, res, next) {
   if (
     req.url === "/api/login" ||
     req.url === "/api/register" ||
-    req.url.includes("api/sections")
+    req.url.includes("api/sections") ||
+    req.url.includes("api/product") ||
+    req.url.includes("api/blog")
   ) {
     next();
     return;
@@ -155,6 +157,7 @@ db.connect(() => {
     app.use("/api/customer", customerRoute);
     app.use("/api/job", jobRoute);
     app.use("/api/sections", sectionRoute);
+    app.use("/api/product", productRoute);
     // console.log("HEAP state before ", HEAP);
     // mark();
     // sweep();

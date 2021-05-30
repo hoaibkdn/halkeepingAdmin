@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 const sharp = require("sharp");
 const multiparty = require("multiparty");
 
+const utils = require("./../utils");
 const ObjectId = require("mongodb").ObjectID;
 const ID = "AKIATB3XFCKT53CSXUH5";
 const SECRET = "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";
@@ -82,7 +83,7 @@ function convertDataSection(fields) {
   return convertedData;
 }
 
-async function uploadImages(files) {
+async function parseParamsS3(files) {
   let s3Params = { 0: [] };
   const filesUpload = Object.values(files);
   for (let i = 0; i < filesUpload.length; i++) {
@@ -117,6 +118,17 @@ async function uploadImages(files) {
   return s3Params;
 }
 
+const getUploadPromise = function (param, errorUploading) {
+  return s3
+    .upload(param, function (err, data) {
+      if (err) {
+        errorUploading.isUploadingError = true;
+      }
+      console.log(`File uploaded successfully. ${data.Location}`); // data.Location = https://halgroup.s3.amazonaws.com/
+    })
+    .promise();
+};
+
 // {
 //   Section: 3,
 //   Title: ‘’,
@@ -147,7 +159,9 @@ const checkDataSection = async (req, res, isAddNewSection) => {
 
   // let s3Params = []
   let s3Params = { 0: [] };
-  let isUploadingError = false;
+  let errorUploading = {
+    isUploadingError: false,
+  };
   form.parse(req, async function (err, fields, files) {
     if (fields) {
       convertedData = convertDataSection(fields);
@@ -169,62 +183,17 @@ const checkDataSection = async (req, res, isAddNewSection) => {
 
     // Files
     if (files) {
-      s3Params = await uploadImages(files);
+      s3Params = await parseParamsS3(files);
     }
-
-    const getUploadPromise = function (param) {
-      return s3
-        .upload(param, function (err, data) {
-          if (err) {
-            isUploadingError = true;
-          }
-          console.log(`File uploaded successfully. ${data.Location}`); // data.Location = https://halgroup.s3.amazonaws.com/
-        })
-        .promise();
-    };
 
     // { 0: [param, param], 1: [param, param]}
     // Upload images to S3
-    const s3ParamsArray = Object.values(s3Params).reduce((total, item) => {
-      const mergedArr = total.concat(item);
-      return mergedArr;
-    }, []);
-    Promise.all(s3ParamsArray.map(getUploadPromise)).then((values) => {
-      let currentArrUploadedImg = 0;
-      let trackingParams = {};
-      values.forEach((item, index) => {
-        if (s3Params[0] && s3Params[0].length > index) {
-          convertedData.images.push(item.Location);
-          currentArrUploadedImg = s3Params[0].length; // 2
-          trackingParams[0] = s3Params[0].length;
-        } else {
-          Object.keys(s3Params).forEach((key) => {
-            const keyNum = Number(key);
+    const s3ParamsArray = utils.mergeS3Parram(s3Params);
+    Promise.all(
+      s3ParamsArray.map((item) => getUploadPromise(item, errorUploading))
+    ).then((values) => {
+      utils.mapS3ImageToConvertedData(values, s3Params, convertedData);
 
-            if (
-              keyNum > 0 &&
-              s3Params[key].length + currentArrUploadedImg > index &&
-              index >= currentArrUploadedImg &&
-              (!trackingParams[key] ||
-                trackingParams[key] < s3Params[key].length)
-            ) {
-              if (convertedData.data[keyNum - 1]) {
-                convertedData.data[keyNum - 1].images.push(item.Location);
-              } else {
-                convertedData.data = convertedData.data.concat({
-                  images: [item.Location],
-                });
-              }
-              currentArrUploadedImg++;
-              if (trackingParams[key]) {
-                trackingParams[key]++;
-              } else {
-                trackingParams = { ...trackingParams, [key]: 1 };
-              }
-            }
-          });
-        }
-      });
       // Save data to db
       if (String(convertedData) === "{}") {
         res.send({
@@ -235,7 +204,7 @@ const checkDataSection = async (req, res, isAddNewSection) => {
         });
         return;
       }
-      if (isUploadingError) {
+      if (errorUploading.isUploadingError) {
         res.send({
           data: {
             error: 1,
@@ -300,7 +269,6 @@ const getBatchOfSections = (req, res) => {
       $or: sectionQuery,
     })
     .toArray(function (err, section) {
-      console.log("section ===> ", section);
       if (err) {
         res.send({
           data: {
@@ -324,7 +292,9 @@ const insertSectionToDb = (sectionName, convertedData, res) => {
     db.get()
       .collection("section")
       .insertOne(convertedData)
-      .then(() => {
+      .then((dataSection) => {
+        console.log("dataSection", dataSection);
+
         res.send({
           data: {
             error: 0,
@@ -469,4 +439,6 @@ module.exports = {
   checkDataSection,
   getBatchOfSections,
   convertDataSection,
+  parseParamsS3,
+  getUploadPromise,
 };
