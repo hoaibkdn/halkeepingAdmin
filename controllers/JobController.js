@@ -12,7 +12,7 @@ const getAllJobs = async function (req, res) {
       {
         $lookup: {
           from: "customer",
-          localField: "customerId",
+          localField: "categoryId",
           foreignField: "_id",
           as: "customer",
         },

@@ -17,8 +17,8 @@ const productSchema = new Schema(
       type: String,
       required: false,
     },
-    category: {
-      type: String,
+    categoryId: {
+      type: ObjectId,
       required: true,
     },
     origin: {
@@ -48,8 +48,10 @@ const productSchema = new Schema(
     tag: {
       type: String,
     },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
   },
-  { timestamps: { createdAt: true, updatedAt: true } }
+  { timestamps: true }
 );
 productSchema.set("timestamps", true);
 const Section = mongoose.model("Section", productSchema);

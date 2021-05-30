@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 // var ObjectId = require("mongodb").ObjectID;
 
-const sectionSchema = new Schema(
+const categorySchema = new Schema(
   {
     title: {
       type: String,
@@ -24,6 +24,7 @@ const sectionSchema = new Schema(
     },
     images: {
       type: Array,
+      required: false,
       // {1: id, 2: imageid}
     },
     createdAt: { type: Date, default: Date.now },
@@ -31,6 +32,6 @@ const sectionSchema = new Schema(
   },
   { timestamps: true }
 );
-sectionSchema.set("timestamps", true);
-const Section = mongoose.model("Section", sectionSchema);
-module.exports = Section;
+categorySchema.set("timestamps", true);
+const Category = mongoose.model("Category", categorySchema);
+module.exports = Category;

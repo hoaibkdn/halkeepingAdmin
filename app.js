@@ -14,6 +14,7 @@ const customerRoute = require("./routes/customer");
 const jobRoute = require("./routes/job");
 const sectionRoute = require("./routes/section");
 const productRoute = require("./routes/product");
+const categoryRoute = require("./routes/category");
 const utils = require("./utils");
 const db = require("./db");
 // const url =
@@ -24,12 +25,6 @@ const db = require("./db");
 app.use(bodyParser.json());
 
 app.use(function (req, res, next) {
-  // const allowedOrigins = [
-  //   "http://localhost:3001",
-  //   "http://localhost:3000",
-  //   "http://127.0.0.1:3000",
-  //   "https://hal-big-practice.web.app",
-  // ];
   // const origin = req.headers.origin;
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS");
@@ -40,8 +35,9 @@ app.use(function (req, res, next) {
     req.url === "/api/login" ||
     req.url === "/api/register" ||
     req.url.includes("api/sections") ||
-    req.url.includes("api/product") ||
-    req.url.includes("api/blog")
+    req.url.includes("api/product/get") ||
+    req.url.includes("api/category/get") ||
+    req.url.includes("api/blog/get")
   ) {
     next();
     return;
@@ -158,6 +154,7 @@ db.connect(() => {
     app.use("/api/job", jobRoute);
     app.use("/api/sections", sectionRoute);
     app.use("/api/product", productRoute);
+    app.use("/api/category", categoryRoute);
     // console.log("HEAP state before ", HEAP);
     // mark();
     // sweep();

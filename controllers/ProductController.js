@@ -40,7 +40,7 @@ function creatProduct(req, res) {
         description: convertedData.description,
         images: convertedData.images,
         origin: convertedData.origin,
-        category: convertedData.category,
+        categoryId: new ObjectId(convertedData.categoryId),
         price: JSON.stringify({
           min: convertedData.minPrice || 0,
           max: convertedData.maxPrice || 0,
@@ -99,6 +99,8 @@ function inserProductToDb(convertedData, res) {
     ...JSON.parse(JSON.stringify(convertedData)),
     price: JSON.parse(convertedData.price),
     shopConnection: JSON.parse(convertedData.shopConnection),
+    categoryId: new ObjectId(convertedData.categoryId),
+    productId: new ObjectId(convertedData.id),
   };
   delete productData._id;
   const insertProduct = () => {
@@ -169,11 +171,11 @@ function inserProductToDb(convertedData, res) {
 }
 
 function getProducts(req, res) {
-  const category = req.query.category;
+  const categoryId = new ObjectId(req.query.categoryId);
   const domainName = req.query.origin;
   const offset = Number(req.query.offset || 0);
   const limit = Number(req.query.limit || 10);
-  if (!category || !domainName) {
+  if (!domainName) {
     res.send({
       data: {
         error: 1,
@@ -185,16 +187,28 @@ function getProducts(req, res) {
 
   db.get()
     .collection("product")
-    .find(
+    .aggregate([
       {
-        category,
-        origin: domainName,
+        $match: {
+          categoryId,
+          origin: domainName,
+        },
       },
       {
-        skip: offset,
-        limit: limit,
-      }
-    )
+        $lookup: {
+          from: "category",
+          localField: "categoryId",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      {
+        $skip: offset,
+      },
+      {
+        $limit: limit,
+      },
+    ])
     .toArray(function (err, products) {
       if (err) {
         res.send({
@@ -214,10 +228,14 @@ function getProducts(req, res) {
       const productsConverted = products.reduce((result, item) => {
         result.push({
           ...item,
-          price: item.price ? JSON.parse(item.price) : undefined,
-          shopConnection: item.shopConnection
-            ? JSON.parse(item.shopConnection)
-            : undefined,
+          price:
+            item.price && typeof item.price === "string"
+              ? JSON.parse(item.price)
+              : item.price,
+          shopConnection:
+            item.shopConnection && typeof item.shopConnection === "string"
+              ? JSON.parse(item.shopConnection)
+              : undefined,
         });
         return result;
       }, []);
