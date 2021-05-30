@@ -171,7 +171,9 @@ function inserProductToDb(convertedData, res) {
 }
 
 function getProducts(req, res) {
-  const categoryId = new ObjectId(req.query.categoryId);
+  const categoryId = req.query.categoryId
+    ? new ObjectId(req.query.categoryId)
+    : undefined;
   const domainName = req.query.origin;
   const offset = Number(req.query.offset || 0);
   const limit = Number(req.query.limit || 10);

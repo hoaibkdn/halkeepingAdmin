@@ -15,8 +15,8 @@ const categorySchema = new Schema(
       required: false,
     },
     section: {
-      type: String | Number,
-      // require: true
+      type: String,
+      require: false,
     },
     origin: {
       type: String,
