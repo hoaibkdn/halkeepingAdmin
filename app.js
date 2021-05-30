@@ -15,6 +15,7 @@ const jobRoute = require("./routes/job");
 const sectionRoute = require("./routes/section");
 const productRoute = require("./routes/product");
 const categoryRoute = require("./routes/category");
+const blogRoute = require("./routes/blog");
 const utils = require("./utils");
 const db = require("./db");
 // const url =
@@ -155,6 +156,7 @@ db.connect(() => {
     app.use("/api/sections", sectionRoute);
     app.use("/api/product", productRoute);
     app.use("/api/category", categoryRoute);
+    app.use("/api/blog", blogRoute);
     // console.log("HEAP state before ", HEAP);
     // mark();
     // sweep();

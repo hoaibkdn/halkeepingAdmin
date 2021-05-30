@@ -286,7 +286,10 @@ function getProductById(req, res) {
             message: "Get product successfully",
             product: {
               ...product,
-              price: product.price ? JSON.parse(product.price) : undefined,
+              price:
+                product.price && typeof product.price === "string"
+                  ? JSON.parse(product.price)
+                  : undefined,
               shopConnection: product.shopConnection
                 ? JSON.parse(product.shopConnection)
                 : undefined,

@@ -293,8 +293,6 @@ const insertSectionToDb = (sectionName, convertedData, res) => {
       .collection("section")
       .insertOne(convertedData)
       .then((dataSection) => {
-        console.log("dataSection", dataSection);
-
         res.send({
           data: {
             error: 0,
