@@ -292,7 +292,7 @@ const insertSectionToDb = (sectionName, convertedData, res) => {
     db.get()
       .collection("section")
       .insertOne(convertedData)
-      .then((dataSection) => {
+      .then(() => {
         res.send({
           data: {
             error: 0,
@@ -331,7 +331,7 @@ const insertSectionToDb = (sectionName, convertedData, res) => {
                 data: {
                   error: 0,
                   message: "Updated successfully",
-                  convertedData,
+                  section: convertedData,
                 },
               });
               return;

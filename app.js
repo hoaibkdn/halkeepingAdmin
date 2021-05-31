@@ -28,7 +28,7 @@ app.use(bodyParser.json());
 app.use(function (req, res, next) {
   // const origin = req.headers.origin;
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS");
+  res.header("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS, PUT");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.header("Access-Control-Allow-Credentials", true);
 
