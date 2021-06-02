@@ -100,9 +100,8 @@ function inserProductToDb(convertedData, res) {
     price: JSON.parse(convertedData.price),
     shopConnection: JSON.parse(convertedData.shopConnection),
     categoryId: new ObjectId(convertedData.categoryId),
-    productId: new ObjectId(convertedData.id),
+    productId: new ObjectId(convertedData.productId),
   };
-  delete productData._id;
   const insertProduct = () => {
     db.get()
       .collection("product")
@@ -121,7 +120,7 @@ function inserProductToDb(convertedData, res) {
     return insertProduct();
   }
   try {
-    const productId = new ObjectId(productData.productId);
+    const productId = productData.productId;
     db.get()
       .collection("product")
       .findOne(
@@ -133,6 +132,7 @@ function inserProductToDb(convertedData, res) {
             // create new product
             insertProduct();
           } else {
+            delete productData._id;
             const result = await db.get().collection("product").updateOne(
               {
                 _id: productId,
@@ -170,7 +170,7 @@ function inserProductToDb(convertedData, res) {
   }
 }
 
-function getProducts(req, res) {
+async function getProducts(req, res) {
   const categoryId = req.query.categoryId
     ? new ObjectId(req.query.categoryId)
     : undefined;
@@ -210,8 +210,9 @@ function getProducts(req, res) {
       {
         $limit: limit,
       },
+      { $sort: { updatedAt: -1 } },
     ])
-    .toArray(function (err, products) {
+    .toArray(async function (err, products) {
       if (err) {
         res.send({
           data: {
