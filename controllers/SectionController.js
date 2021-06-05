@@ -58,15 +58,21 @@ function convertDataSection(fields) {
     if (name === "section") {
       convertedData.section = fields[name][0]; // set the mapping origin and section name;
     }
+
+    // TODO: REFACTOR the way to convert data
     const numbers = name.match(REGEX_NUM) || [];
     // title, description, section, video
     if (numbers.length < 1 && name !== "section") {
       convertedData[name] = fields[name] ? fields[name][0] : "";
     }
-    // title_1, description_1, video_1
+    // title_1, description_1, video_1, image_1, image_2
+    const label = name.split("_")[0];
     if (numbers.length === 1) {
-      const label = name.split("_")[0];
       const index = Number(name.split("_")[1]);
+      if (label === "image") {
+        convertedData.images.push(fields[name] ? fields[name][0] : "");
+        continue;
+      }
       if (convertedData.data[index - 1]) {
         convertedData.data[index - 1] = {
           ...convertedData.data[index - 1],
@@ -77,6 +83,21 @@ function convertDataSection(fields) {
           [label]: fields[name] ? fields[name][0] : "",
           images: [],
         });
+      }
+    } else if (numbers.length === 2 && label === "image") {
+      const index = Number(name.split("_")[2]);
+      if (
+        convertedData.data[index - 1] &&
+        convertedData.data[index - 1].images
+      ) {
+        convertedData.data[index - 1].images.push(
+          fields[name] ? fields[name][0] : ""
+        );
+      } else {
+        convertedData.data[index - 1] = {
+          ...convertedData.data[index - 1],
+          images: [fields[name] ? fields[name][0] : ""],
+        };
       }
     }
   }
@@ -182,8 +203,11 @@ const checkDataSection = async (req, res, isAddNewSection) => {
     }
 
     // Files
-    if (files) {
+    if (JSON.stringify(files) !== "{}") {
       s3Params = await parseParamsS3(files);
+    } else {
+      insertSectionToDb(sectionName, convertedData, res);
+      return;
     }
 
     // { 0: [param, param], 1: [param, param]}
