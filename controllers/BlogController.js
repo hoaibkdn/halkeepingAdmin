@@ -138,7 +138,7 @@ function inserBlogToDb(blogModel, res) {
   }
 }
 
-function getBlogs(req, res) {
+async function getBlogs(req, res) {
   const section = req.query.section;
   const origin = req.query.origin;
 
@@ -164,9 +164,10 @@ function getBlogs(req, res) {
       {
         skip: offset,
         limit,
+        sort: { updatedAt: -1 },
       }
     )
-    .toArray(function (err, blogs) {
+    .toArray(async function (err, blogs) {
       if (err) {
         res.send({
           data: {
@@ -181,6 +182,23 @@ function getBlogs(req, res) {
         currentOffset += limit;
       } else {
         currentOffset = -1;
+      }
+      let hasNext = currentOffset !== -1 ? true : false;
+      if (currentOffset > 0) {
+        hasNext = await db
+          .get()
+          .collection("blog")
+          .find(
+            {
+              section,
+              origin,
+            },
+            {
+              skip: currentOffset,
+              limit: 1,
+            }
+          )
+          .hasNext();
       }
       const blogsConverted = blogs.reduce((result, item) => {
         result.push({
@@ -200,7 +218,7 @@ function getBlogs(req, res) {
         data: {
           error: 0,
           blogs: blogsConverted,
-          offset: currentOffset,
+          offset: hasNext ? currentOffset : -1,
         },
       });
     });

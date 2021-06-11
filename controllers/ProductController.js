@@ -228,6 +228,36 @@ async function getProducts(req, res) {
       } else {
         currentOffset = -1;
       }
+      let hasNext = currentOffset !== -1 ? true : false;
+      if (currentOffset > 0) {
+        hasNext = await db
+          .get()
+          .collection("product")
+          .aggregate([
+            {
+              $match: {
+                categoryId,
+                origin: domainName,
+              },
+            },
+            {
+              $lookup: {
+                from: "category",
+                localField: "categoryId",
+                foreignField: "_id",
+                as: "category",
+              },
+            },
+            {
+              $skip: currentOffset,
+            },
+            {
+              $limit: 1,
+            },
+          ])
+          .hasNext();
+      }
+
       const productsConverted = products.reduce((result, item) => {
         result.push({
           ...item,
@@ -246,7 +276,7 @@ async function getProducts(req, res) {
         data: {
           error: 0,
           products: productsConverted,
-          offset: currentOffset,
+          offset: hasNext ? currentOffset : -1,
         },
       });
     });
