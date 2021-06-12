@@ -420,6 +420,9 @@ function sendEmail(req, res) {
   const { email: senderEmail, subject, body } = req.body;
   var transporter = nodemailer.createTransport({
     service: "gmail",
+    host: "https://hal-big-practice.web.app",
+    port: 465,
+    secure: true,
     auth: {
       user: "hoaibkdn2012@gmail.com",
       pass: "UtCung@13",
