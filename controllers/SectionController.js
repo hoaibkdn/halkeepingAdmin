@@ -438,7 +438,7 @@ function sendEmail(req, res) {
       res.send({
         data: {
           error: 1,
-          message: "Sent Failed",
+          message: error,
         },
       });
     } else {
