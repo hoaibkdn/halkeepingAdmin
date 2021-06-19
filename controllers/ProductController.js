@@ -177,7 +177,9 @@ async function getProducts(req, res) {
   const domainName = req.query.origin;
   const offset = Number(req.query.offset || 0);
   const limit = Number(req.query.limit || 10);
-  if (!domainName) {
+  const search = req.query.search || "";
+  const regexSearch = new RegExp("^" + search);
+  if (!domainName && !search) {
     res.send({
       data: {
         error: 1,
@@ -186,14 +188,32 @@ async function getProducts(req, res) {
     });
     return;
   }
+  const matchProductQuery = {
+    categoryId,
+    origin: domainName,
+  };
+  if (!categoryId) {
+    delete matchProductQuery.categoryId;
+  }
+  if (!domainName) {
+    delete matchProductQuery.origin;
+  }
 
   db.get()
     .collection("product")
     .aggregate([
       {
         $match: {
-          categoryId,
-          origin: domainName,
+          $or: [
+            {
+              ...matchProductQuery,
+              title: { $in: [regexSearch] },
+            },
+            {
+              ...matchProductQuery,
+              description: { $in: [regexSearch] },
+            },
+          ],
         },
       },
       {
@@ -235,10 +255,7 @@ async function getProducts(req, res) {
           .collection("product")
           .aggregate([
             {
-              $match: {
-                categoryId,
-                origin: domainName,
-              },
+              $match: matchProductQuery,
             },
             {
               $lookup: {

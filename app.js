@@ -38,7 +38,8 @@ app.use(function (req, res, next) {
     req.url.includes("api/sections") ||
     req.url.includes("api/product/get") ||
     req.url.includes("api/category/get") ||
-    req.url.includes("api/blog/get")
+    req.url.includes("api/blog/get") ||
+    req.url.includes("api/product/search")
   ) {
     next();
     return;
