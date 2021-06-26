@@ -3,21 +3,21 @@ const db = require("./../db");
 var ObjectId = require("mongodb").ObjectID;
 
 function createCategory(req, res) {
-  const category = new Category({
+  const categoryBody = new Category({
     ...req.body,
   });
 
-  const categoryId = category._id;
+  const categoryId = categoryBody._id;
   const insertCategory = () => {
     db.get()
       .collection("category")
-      .insertOne(category)
+      .insertOne(categoryBody)
       .then(() => {
         res.send({
           data: {
             error: 0,
             message: "Added successfully",
-            category,
+            category: categoryBody,
           },
         });
       });
@@ -40,7 +40,7 @@ function createCategory(req, res) {
                 _id: categoryId,
               },
               {
-                $set: category,
+                $set: categoryBody,
               },
               { upsert: true }
             );
@@ -49,7 +49,7 @@ function createCategory(req, res) {
                 data: {
                   error: 0,
                   message: "Updated successfully",
-                  category,
+                  category: categoryBody,
                 },
               });
               return;
