@@ -178,7 +178,7 @@ async function getProducts(req, res) {
   const offset = Number(req.query.offset || 0);
   const limit = Number(req.query.limit || 10);
   const search = req.query.search || "";
-  const regexSearch = new RegExp("^" + search);
+  const regexSearch = new RegExp("^" + search, "i");
   if (!domainName && !search) {
     res.send({
       data: {
