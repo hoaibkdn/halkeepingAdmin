@@ -337,10 +337,12 @@ function getProductById(req, res) {
               price:
                 product.price && typeof product.price === "string"
                   ? JSON.parse(product.price)
-                  : undefined,
-              shopConnection: product.shopConnection
-                ? JSON.parse(product.shopConnection)
-                : undefined,
+                  : product.price,
+              shopConnection:
+                product.shopConnection &&
+                typeof product.shopConnection === "string"
+                  ? JSON.parse(product.shopConnection)
+                  : product.shopConnection,
             },
           },
         });
