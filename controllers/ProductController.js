@@ -51,7 +51,10 @@ function creatProduct(req, res) {
           sendo: convertedData.sendo,
           tiki: convertedData.tiki,
         }),
-        productId: new ObjectId(convertedData.id),
+        productId:
+          convertedData.id || convertedData.id !== "null"
+            ? convertedData.id
+            : undefined,
         tag: convertedData.tag,
       });
     }
