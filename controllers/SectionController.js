@@ -85,7 +85,7 @@ function convertDataSection(fields) {
         });
       }
     } else if (numbers.length === 2 && label === "image") {
-      const index = Number(name.split("_")[2]);
+      const index = Number(name.split("_")[1]);
       if (
         convertedData.data[index - 1] &&
         convertedData.data[index - 1].images
@@ -129,9 +129,10 @@ async function parseParamsS3(files) {
       if (s3Params[numbers[0]]) {
         s3Params[numbers[0]].push(param);
       } else {
+        const currentNum = Number(numbers[0]);
         s3Params = {
           ...s3Params,
-          [numbers[0]]: [param],
+          [currentNum]: [param],
         };
       }
     }

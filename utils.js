@@ -22,10 +22,16 @@ const mergeS3Parram = (s3Params) => {
  * @param {Array} values
  * values = [{
  *   Location: string
+ * }, {
+ *   Location: string
+ * }, {
+ *   Location: string
  * }]
  * @param {Object} s3Params
- *  s3Params = { 0: [] };
+ *  s3Params = { 0: [], 1: [], 2: [], 3: [{}, {}, {}] };
+ *
  * @param {Object} convertedData
+ * convertedData.images[x]= ["url"]
  */
 const mapS3ImageToConvertedData = (values, s3Params, convertedData) => {
   let currentArrUploadedImg = 0;
@@ -41,7 +47,8 @@ const mapS3ImageToConvertedData = (values, s3Params, convertedData) => {
 
         if (
           keyNum > 0 &&
-          s3Params[key].length + currentArrUploadedImg > index &&
+          s3Params[key].length &&
+          s3Params[key].length + currentArrUploadedImg >= index &&
           index >= currentArrUploadedImg &&
           (!trackingParams[key] || trackingParams[key] < s3Params[key].length)
         ) {
