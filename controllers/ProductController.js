@@ -288,7 +288,7 @@ async function getProducts(req, res) {
           shopConnection:
             item.shopConnection && typeof item.shopConnection === "string"
               ? JSON.parse(item.shopConnection)
-              : undefined,
+              : item.shopConnection,
         });
         return result;
       }, []);
