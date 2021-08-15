@@ -71,8 +71,16 @@ const mapS3ImageToConvertedData = (values, s3Params, convertedData) => {
   });
 };
 
+function convertStringArrToArray(stringArr = "") {
+  if (stringArr === "null" || stringArr === "undefined") {
+    return [];
+  }
+  return stringArr.split(",");
+}
+
 module.exports = {
   checkAuthorization,
   mergeS3Parram,
   mapS3ImageToConvertedData,
+  convertStringArrToArray,
 };

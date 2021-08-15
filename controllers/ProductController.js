@@ -58,8 +58,8 @@ function creatProduct(req, res) {
             ? convertedData.id
             : undefined,
         tag: convertedData.tag,
-        sizes: JSON.parse(convertedData.sizes),
-        colors: JSON.parse(convertedData.colors),
+        sizes: utils.convertStringArrToArray(convertedData.sizes),
+        colors: utils.convertStringArrToArray(convertedData.colors),
       });
     }
 
