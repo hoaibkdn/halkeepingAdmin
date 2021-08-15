@@ -30,8 +30,8 @@ const productSchema = new Schema(
       require: false,
     },
     // {
-    //   min: 45000,
-    //   max: 145000
+    //   originalPrice: 145000,
+    //   currentPrice: 105000
     // }
     price: {
       type: String, // Json object
@@ -47,6 +47,12 @@ const productSchema = new Schema(
     },
     tag: {
       type: String,
+    },
+    sizes: {
+      type: Array,
+    },
+    colors: {
+      type: Array,
     },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },

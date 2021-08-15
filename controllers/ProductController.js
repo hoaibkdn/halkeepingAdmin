@@ -42,8 +42,8 @@ function creatProduct(req, res) {
         origin: convertedData.origin,
         categoryId: new ObjectId(convertedData.categoryId),
         price: JSON.stringify({
-          min: convertedData.minPrice || 0,
-          max: convertedData.maxPrice || 0,
+          originalPrice: convertedData.originalPrice || 0,
+          currentPrice: convertedData.currentPrice || 0,
         }),
         shopConnection: JSON.stringify({
           shopee: convertedData.shopee,
@@ -52,10 +52,14 @@ function creatProduct(req, res) {
           tiki: convertedData.tiki,
         }),
         productId:
-          convertedData.id || convertedData.id !== "null"
+          convertedData.id ||
+          convertedData.id !== "null" ||
+          convertedData.id !== "undefined"
             ? convertedData.id
             : undefined,
         tag: convertedData.tag,
+        sizes: JSON.parse(convertedData.sizes),
+        colors: JSON.parse(convertedData.colors),
       });
     }
 
@@ -177,6 +181,7 @@ async function getProducts(req, res) {
   const categoryId = req.query.categoryId
     ? new ObjectId(req.query.categoryId)
     : undefined;
+  console.log("categoryId ", categoryId);
   const domainName = req.query.origin;
   const offset = Number(req.query.offset || 0);
   const limit = Number(req.query.limit || 10);
