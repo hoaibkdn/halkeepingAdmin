@@ -425,14 +425,14 @@ function sendEmail(req, res) {
     port: 465,
     secure: true,
     auth: {
-      user: "hoaibkdn2012@gmail.com",
+      user: "halStorm13@gmail.com",
       pass: "UtCung@13",
     },
   });
 
   var mailOptions = {
     from: senderEmail,
-    to: "hoaibkdn2012@gmail.com",
+    to: "halStorm13@gmail.com",
     subject: subject,
     text: body,
   };
