@@ -13,4 +13,7 @@ router.get(
 router.put("/edit-section/:sectionName", SectionController.updateSection);
 router.delete("/remove/:sectionName", SectionController.removeSection);
 router.post("/send-email", SectionController.sendEmail);
+router.post("/send-checkin", SectionController.sendCheckinForm);
+router.get("/get-data-list", SectionController.getDataBySectionName);
+
 module.exports = router;

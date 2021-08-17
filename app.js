@@ -35,11 +35,13 @@ app.use(function (req, res, next) {
   if (
     req.url === "/api/login" ||
     req.url === "/api/register" ||
-    req.url.includes("api/sections") ||
+    req.url.includes("api/sections/get-section") ||
+    req.url.includes("api/sections/get-batch-sections") ||
     req.url.includes("api/product/get") ||
     req.url.includes("api/category/get") ||
     req.url.includes("api/blog/get") ||
-    req.url.includes("api/product/search")
+    req.url.includes("api/product/search") ||
+    req.url.includes("api/sections/send-checkin")
   ) {
     next();
     return;

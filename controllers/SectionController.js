@@ -5,6 +5,7 @@ const multiparty = require("multiparty");
 
 const utils = require("./../utils");
 const ObjectId = require("mongodb").ObjectID;
+const Checkin = require("./../models/Checkin");
 const ID = "AKIATB3XFCKT53CSXUH5";
 const SECRET = "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";
 const db = require("../db");
@@ -312,21 +313,21 @@ const getBatchOfSections = (req, res) => {
     });
 };
 
-const insertSectionToDb = (sectionName, convertedData, res) => {
-  const insertSection = () => {
-    db.get()
-      .collection("section")
-      .insertOne(convertedData)
-      .then(() => {
-        res.send({
-          data: {
-            error: 0,
-            message: "Added successfully",
-            section: convertedData,
-          },
-        });
+const insertSection = (convertedData, res) => {
+  db.get()
+    .collection("section")
+    .insertOne(convertedData)
+    .then(() => {
+      res.send({
+        data: {
+          error: 0,
+          message: "Added successfully",
+          section: convertedData,
+        },
       });
-  };
+    });
+};
+const insertSectionToDb = (sectionName, convertedData, res) => {
   if (!sectionName) {
     return insertSection();
   }
@@ -456,6 +457,38 @@ function sendEmail(req, res) {
   });
 }
 
+function sendCheckinForm(req, res) {
+  const checkinForm = new Checkin({
+    ...req.body,
+  });
+  insertSection(checkinForm, res);
+}
+
+function getDataBySectionName(req, res) {
+  db.get()
+    .collection("section")
+    .find({
+      section: req.query.sectionName,
+    })
+    .toArray(function (err, section) {
+      if (err) {
+        res.send({
+          data: {
+            error: 1,
+            message: "Get section error",
+          },
+        });
+        return;
+      }
+      return res.send({
+        data: {
+          error: 0,
+          section,
+        },
+      });
+    });
+}
+
 module.exports = {
   addDataSection,
   updateSection,
@@ -467,4 +500,6 @@ module.exports = {
   convertDataSection,
   parseParamsS3,
   getUploadPromise,
+  sendCheckinForm,
+  getDataBySectionName,
 };
