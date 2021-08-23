@@ -42,8 +42,8 @@ function creatProduct(req, res) {
         origin: convertedData.origin,
         categoryId: new ObjectId(convertedData.categoryId),
         price: JSON.stringify({
-          originalPrice: convertedData.originalPrice || 0,
-          currentPrice: convertedData.currentPrice || 0,
+          originalPrice: convertedData.originalPrice > 0 || 0,
+          currentPrice: convertedData.currentPrice > 0 || 0,
         }),
         shopConnection: JSON.stringify({
           shopee: convertedData.shopee,
