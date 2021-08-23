@@ -329,7 +329,7 @@ const insertSection = (convertedData, res) => {
 };
 const insertSectionToDb = (sectionName, convertedData, res) => {
   if (!sectionName) {
-    return insertSection();
+    return insertSection(convertedData, res);
   }
   try {
     db.get()
@@ -341,7 +341,7 @@ const insertSectionToDb = (sectionName, convertedData, res) => {
         async function (err, section) {
           if (!section) {
             // create new section
-            insertSection();
+            insertSection(convertedData, res);
           } else {
             const result = await db.get().collection("section").updateOne(
               {
@@ -465,10 +465,17 @@ function sendCheckinForm(req, res) {
 }
 
 function getDataBySectionName(req, res) {
+  const offset = Number(req.query.offset || 0);
+  const limit = Number(req.query.limit || 10);
   db.get()
     .collection("section")
     .find({
       section: req.query.sectionName,
+    })
+    .limit(limit)
+    .skip(offset)
+    .sort({
+      updatedAt: -1,
     })
     .toArray(function (err, section) {
       if (err) {
@@ -480,10 +487,12 @@ function getDataBySectionName(req, res) {
         });
         return;
       }
+      const hasNext = section && section.length === limit;
       return res.send({
         data: {
           error: 0,
           section,
+          offset: hasNext ? offset + limit : -1,
         },
       });
     });
