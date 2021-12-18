@@ -1,6 +1,5 @@
 const Job = require("./../models/Job");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const Customer = require("./../models/Customer");
 const db = require("./../db");
 const puppeteer = require("puppeteer");
 var ObjectId = require("mongodb").ObjectID;
@@ -12,19 +11,20 @@ const getAllJobs = async function (req, res) {
       {
         $lookup: {
           from: "customer",
-          localField: "categoryId",
+          localField: "customerId",
           foreignField: "_id",
           as: "customer",
         },
       },
-      {
-        $lookup: {
-          from: "cleaner",
-          localField: "cleanerId",
-          foreignField: "_id",
-          as: "cleaner",
-        },
-      },
+      { $sort: { updatedAt: -1 } },
+      // {
+      //   $lookup: {
+      //     from: "cleaner",
+      //     localField: "cleanerId",
+      //     foreignField: "_id",
+      //     as: "cleaner",
+      //   },
+      // },
     ])
     .toArray()
     .then((jobs) => {
@@ -46,49 +46,76 @@ const getAllJobs = async function (req, res) {
     });
 };
 
-const createNewJob = function (req, res, next) {
+// find existing phone number
+const addCustomerPhoneNumber = async function (customerInfo) {
+  try {
+    const customerRes = await db.get().collection("customer").findOne({
+      phone: customerInfo.phone,
+    });
+    if (!customerRes) {
+      await db.get().collection("customer").insertOne(customerInfo);
+    }
+    return customerRes;
+  } catch (error) {
+    return null;
+  }
+};
+
+const createNewJob = async function (req, res, next) {
+  const insertedCustomer = await addCustomerPhoneNumber(
+    new Customer({
+      name: req.body.name,
+      phone: req.body.phone,
+      email: req.body.email,
+      address: req.body.address,
+    })
+  );
+
   const job = new Job({
     ...req.body,
-    customerId: new ObjectId(req.body.customerId),
+    customerId: insertedCustomer._id,
   });
-  delete job.cleanerId;
   try {
     db.get()
       .collection("job")
       .insertOne(job)
       .then((createdJob) => {
         const jobId = createdJob.ops[0]._id;
-        console.log("createdJob jobId ==> ", jobId);
-        const jobCleaner = req.body.cleaners
-          ? req.body.cleaners.map((item) => ({
-              cleanerId: item,
-              jobId,
-            }))
-          : [];
-        db.get()
-          .collection("job_cleaner")
-          .insertMany(jobCleaner)
-          .then(() => {
-            res.send({
-              data: {
-                error: 0,
-                message: "Created the job successfully",
-              },
-            });
-          });
-        // res.send({
-        //   data: {
-        //     error: 0,
-        //     message: "Created the job successfully",
-        //   },
-        // });
+        res.send({
+          data: {
+            error: 0,
+            message: "Created the job successfully",
+          },
+        });
+        // const jobCleaner = req.body.cleaners
+        //   ? req.body.cleaners.map((item) => ({
+        //       cleanerId: item,
+        //       jobId,
+        //     }))
+        //   : [];
+        //   db.get()
+        //     .collection("job_cleaner")
+        //     .insertMany(jobCleaner)
+        //     .then(() => {
+        //       res.send({
+        //         data: {
+        //           error: 0,
+        //           message: "Created the job successfully",
+        //         },
+        //       });
+        //     });
+        //   // res.send({
+        //   //   data: {
+        //   //     error: 0,
+        //   //     message: "Created the job successfully",
+        //   //   },
+        //   // });
       });
   } catch (error) {
     res.send({
       error: 1,
       message: error.message,
     });
-    console.log(error);
   }
 };
 
@@ -97,9 +124,9 @@ const editJob = async function (req, res) {
   if (editedData.customerId) {
     editedData.customerId = new ObjectId(req.body.customerId);
   }
-  if (editedData.cleanerId) {
-    editedData.cleanerId = new ObjectId(req.body.cleanerId);
-  }
+  // if (editedData.cleanerId) {
+  //   editedData.cleanerId = new ObjectId(req.body.cleanerId);
+  // }
   const result = await db
     .get()
     .collection("job")

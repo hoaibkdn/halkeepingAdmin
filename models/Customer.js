@@ -16,6 +16,12 @@ const customerSchema = new Schema(
     address: {
       type: String,
       required: true,
+      // json:
+      // {"quan":"Hai Chau","huyen":"Hai Chau 2","detail":"30 Ngo Quyen"}
+    },
+    email: {
+      type: String,
+      required: true,
     },
     facebook: {
       type: String, // name of fb or url
@@ -39,5 +45,5 @@ const customerSchema = new Schema(
   { timestamps: { createdAt: true, updatedAt: true } }
 );
 customerSchema.set("timestamps", true);
-const Customer = mongoose.model("Cleaner", customerSchema);
+const Customer = mongoose.model("Customer", customerSchema);
 module.exports = Customer;
