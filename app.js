@@ -16,6 +16,7 @@ const sectionRoute = require("./routes/section");
 const productRoute = require("./routes/product");
 const categoryRoute = require("./routes/category");
 const blogRoute = require("./routes/blog");
+const provinceRoute = require("./routes/province");
 const utils = require("./utils");
 const db = require("./db");
 // const url =
@@ -42,7 +43,8 @@ app.use(function (req, res, next) {
     req.url.includes("api/blog/get") ||
     req.url.includes("api/product/search") ||
     req.url.includes("api/sections/send-checkin") ||
-    req.url.includes("api/job/create")
+    req.url.includes("api/job/create") ||
+    req.url.includes("api/provinces")
   ) {
     next();
     return;
@@ -161,6 +163,7 @@ db.connect(() => {
     app.use("/api/product", productRoute);
     app.use("/api/category", categoryRoute);
     app.use("/api/blog", blogRoute);
+    app.use("/api/provinces", provinceRoute);
     // console.log("HEAP state before ", HEAP);
     // mark();
     // sweep();
