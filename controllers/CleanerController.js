@@ -1,21 +1,17 @@
 const Cleaner = require("./../models/Cleaner");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const db = require("./../db");
-var ObjectId = require("mongodb").ObjectID;
 
 const addCleaner = function (req, res, next) {
-  console.log("cleaner content ", req);
-  if(!req.body.name) {
+  if (!req.body.name) {
     res.send({
       data: {
         error: 1,
         message: "Data is not empty",
       },
-    }); 
-    return
+    });
+    return;
   }
-  const cleaner = new Cleaner(req.body);
+  const cleaner = new Cleaner({ ...req.body, isActive: true });
   try {
     db.get()
       .collection("cleaner")
@@ -33,10 +29,51 @@ const addCleaner = function (req, res, next) {
       error: 1,
       message: error.message,
     });
-    console.log(error);
   }
 };
 
+function getCleaners(req, res) {
+  const offset = Number(req.query.offset || 0);
+  const limit = Number(req.query.limit || 10);
+  try {
+    db.get()
+      .collection("cleaner")
+      .aggregate([
+        {
+          $skip: offset,
+        },
+        {
+          $limit: limit,
+        },
+        { $sort: { updatedAt: -1 } },
+      ])
+      .toArray(function (err, cleaners) {
+        if (err) {
+          res.send({
+            error: 1,
+            message: "Get cleaners error",
+          });
+          return;
+        }
+        const hasMore = cleaners.length >= limit;
+        res.send({
+          error: 0,
+          message: "Get cleaners successfully",
+          cleaners,
+          nextOffset: hasMore ? offset + limit : offset,
+          hasMore,
+        });
+      });
+  } catch (error) {
+    console.log(error);
+    res.send({
+      error: 1,
+      message: "Get cleaners error",
+    });
+  }
+}
+
 module.exports = {
   addCleaner,
+  getCleaners,
 };

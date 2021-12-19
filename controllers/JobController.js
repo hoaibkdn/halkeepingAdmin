@@ -121,12 +121,12 @@ const createNewJob = async function (req, res, next) {
 
 const editJob = async function (req, res) {
   const editedData = { ...req.body, updatedAt: Date.now() };
-  if (editedData.customerId) {
+  if (editedData.customerId && req.body.customerId) {
     editedData.customerId = new ObjectId(req.body.customerId);
   }
-  // if (editedData.cleanerId) {
-  //   editedData.cleanerId = new ObjectId(req.body.cleanerId);
-  // }
+  if (req.body.cleanerId) {
+    editedData.cleanerId = new ObjectId(req.body.cleanerId);
+  }
   const result = await db
     .get()
     .collection("job")
