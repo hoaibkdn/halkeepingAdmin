@@ -57,7 +57,7 @@ const jobSchema = new Schema(
       //    note: include vacuum cleaner
       // }
     },
-    clientNote: {
+    adminNote: {
       type: String,
     },
     createdAt: {

@@ -156,6 +156,74 @@ const editJob = async function (req, res) {
   });
 };
 
+const getBasicJobInfo = async function (req, res) {
+  try {
+    const priceInfo = await db.get().collection("price_per_hour").findOne();
+    const paymentMethod = await db.get().collection("payment_method").findOne();
+    const cleaningToolFee = await db
+      .get()
+      .collection("price_cleaning_tool")
+      .findOne();
+    res.send({
+      error: 0,
+      data: {
+        price_per_hour: priceInfo,
+        payment_method: [paymentMethod], // TODO: should get array
+        cleaning_tool_fee: cleaningToolFee,
+      },
+    });
+    return;
+  } catch (e) {
+    res.send({
+      error: 0,
+      data: {
+        price_per_hour: {
+          one_hour: 80000,
+          from_two_hour: 60000,
+        },
+        payment_method: {
+          method: "",
+        },
+        cleaning_tool_fee: cleaningToolFee,
+      },
+    });
+  }
+};
+
+const initBasicJobInfo = async function (req, res) {
+  const user_id = ObjectId(req.user._id);
+  const priceInfo = {
+    user_id,
+    one_hour: 80000,
+    from_two_hour: 60000,
+  };
+  const priceCleaningTool = {
+    user_id,
+    basic: 30000,
+    vacuum: 30000,
+  };
+  const paymentMethod = {
+    method: "cash",
+  };
+  try {
+    await db.get().collection("price_per_hour").insertOne(priceInfo);
+    await db
+      .get()
+      .collection("price_cleaning_tool")
+      .insertOne(priceCleaningTool);
+    await db.get().collection("payment_method").insertOne(paymentMethod);
+    res.send({
+      error: 0,
+      message: "Init basic info successfully",
+    });
+  } catch (error) {
+    res.send({
+      error: 1,
+      message: "Cannot insert",
+    });
+  }
+};
+
 const downloadPdfBill = async function (req, res) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -175,4 +243,6 @@ module.exports = {
   getAllJobs,
   editJob,
   downloadPdfBill,
+  getBasicJobInfo,
+  initBasicJobInfo,
 };
