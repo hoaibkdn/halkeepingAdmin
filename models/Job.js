@@ -26,8 +26,8 @@ const jobSchema = new Schema(
       type: Number, // minutes
       required: true,
     },
-    cleaningToolFee: {
-      type: Number,
+    cleaningTool: {
+      type: Object,
       default: 0,
     },
     workingAddress: {
@@ -39,6 +39,9 @@ const jobSchema = new Schema(
     pricePerHour: {
       type: Number,
       default: 60000,
+    },
+    startWorkingTime: {
+      type: String,
     },
     totalPrice: {
       type: Number,
@@ -56,6 +59,9 @@ const jobSchema = new Schema(
       //    extra_fee: 30000,
       //    note: include vacuum cleaner
       // }
+    },
+    customerNote: {
+      type: String,
     },
     adminNote: {
       type: String,

@@ -61,6 +61,24 @@ const addCustomerPhoneNumber = async function (customerInfo) {
   }
 };
 
+/*
+  body:
+  {
+    name: "string",
+    phone: "string",
+    email: "a@gmail.com",
+    address: "Hai Chau, Da Nang",
+    cleaningTool: {
+      basic: true,
+      vacuum: true,
+    },
+    preferDate: Date, 
+    startWorkingTime: "08:30am",
+    durationTime: 150, //2h30m
+    note: "asdas asd asd sd",
+    unit: "vnd"
+  }
+*/
 const createNewJob = async function (req, res, next) {
   const insertedCustomer = await addCustomerPhoneNumber(
     new Customer({
@@ -75,41 +93,35 @@ const createNewJob = async function (req, res, next) {
     ...req.body,
     customerId: insertedCustomer._id,
   });
+  const cleaningTool = req.body.cleaningTool;
+  const [priceInfo, paymentMethod, cleaningToolFee] = await getBasicFeeDb();
   try {
     db.get()
       .collection("job")
       .insertOne(job)
       .then((createdJob) => {
-        const jobId = createdJob.ops[0]._id;
+        const insertedJob = createdJob.ops[0] ? createdJob.ops[0]._doc : job;
         res.send({
           data: {
             error: 0,
             message: "Created the job successfully",
+            data: {
+              ...insertedJob,
+              customer: insertedCustomer,
+              priceInfo,
+              paymentMethod,
+              cleaningToolFee,
+              total: calculateTotalFee(
+                {
+                  durationTime: req.body.durationTime,
+                  cleaningTool,
+                },
+                priceInfo,
+                cleaningToolFee
+              ),
+            },
           },
         });
-        // const jobCleaner = req.body.cleaners
-        //   ? req.body.cleaners.map((item) => ({
-        //       cleanerId: item,
-        //       jobId,
-        //     }))
-        //   : [];
-        //   db.get()
-        //     .collection("job_cleaner")
-        //     .insertMany(jobCleaner)
-        //     .then(() => {
-        //       res.send({
-        //         data: {
-        //           error: 0,
-        //           message: "Created the job successfully",
-        //         },
-        //       });
-        //     });
-        //   // res.send({
-        //   //   data: {
-        //   //     error: 0,
-        //   //     message: "Created the job successfully",
-        //   //   },
-        //   // });
       });
   } catch (error) {
     res.send({
@@ -156,39 +168,119 @@ const editJob = async function (req, res) {
   });
 };
 
-const getBasicJobInfo = async function (req, res) {
+async function getBasicFeeDb() {
+  let priceInfo = {
+    one_hour: 80000,
+    from_two_hour: 60000,
+  };
+  let paymentMethod = [
+    {
+      method: "cash",
+    },
+  ];
+  let cleaningToolFee = {
+    basic: 30000,
+    vacuum: 30000,
+  };
+
   try {
-    const priceInfo = await db.get().collection("price_per_hour").findOne();
-    const paymentMethod = await db.get().collection("payment_method").findOne();
-    const cleaningToolFee = await db
+    priceInfo = await db.get().collection("price_per_hour").findOne();
+    paymentMethod = await db
+      .get()
+      .collection("payment_method")
+      .find()
+      .toArray();
+    cleaningToolFee = await db
       .get()
       .collection("price_cleaning_tool")
       .findOne();
+  } catch (e) {
+    return [priceInfo, paymentMethod, cleaningToolFee];
+  }
+  return [priceInfo, paymentMethod, cleaningToolFee];
+}
+
+/* body: 
+  {
+    durationTime: 150,
+    cleaningTool: {
+      basic: true,
+      vacuum: false,
+    },
+    customer: Customer // optional 
+  }
+  When press confirm, should send both customer info
+  Customer: 
+  {
+    name: "string",
+    phone: "string",
+    email: "a@gmail.com",
+    address: "Hai Chau, Da Nang",
+  }
+*/
+const getBasicJobInfo = async function (req, res) {
+  // basic info default
+  const [priceInfo, paymentMethod, cleaningToolFee] = await getBasicFeeDb();
+  try {
+    // Save user info
+    if (req.body.customer) {
+      await addCustomerPhoneNumber(
+        new Customer({
+          ...req.body.customer,
+        })
+      );
+    }
+
+    // Calculate total price
+    const totalFee = calculateTotalFee(req.body, priceInfo, cleaningToolFee);
     res.send({
       error: 0,
       data: {
         price_per_hour: priceInfo,
-        payment_method: [paymentMethod], // TODO: should get array
+        payment_method: paymentMethod,
         cleaning_tool_fee: cleaningToolFee,
+        total: totalFee,
       },
     });
     return;
   } catch (e) {
     res.send({
-      error: 0,
+      error: e,
       data: {
-        price_per_hour: {
-          one_hour: 80000,
-          from_two_hour: 60000,
+        data: {
+          price_per_hour: priceInfo,
+          payment_method: paymentMethod,
+          cleaning_tool_fee: cleaningToolFee,
         },
-        payment_method: {
-          method: "",
-        },
-        cleaning_tool_fee: cleaningToolFee,
       },
     });
   }
 };
+
+// Calculate total fee
+function calculateTotalFee(basicInfoReq, priceInfo, cleaningToolFee) {
+  const basicInfo = {
+    durationTime: basicInfoReq.durationTime
+      ? Number(basicInfoReq.durationTime)
+      : 0,
+    cleaningTool: {
+      basic:
+        basicInfoReq.cleaningTool && basicInfoReq.cleaningTool.basic ? 1 : 0,
+      vacuum:
+        basicInfoReq.cleaningTool && basicInfoReq.cleaningTool.vacuum ? 1 : 0,
+    },
+  };
+  const usingPrice =
+    basicInfo.durationTime <= 60 ? priceInfo.one_hour : priceInfo.from_two_hour;
+  const pricePerMin = usingPrice / 60;
+  const totalCleaningToolFee =
+    basicInfo.cleaningTool.basic * cleaningToolFee.basic +
+    basicInfo.cleaningTool.vacuum * cleaningToolFee.vacuum;
+  const totalFee =
+    Math.round(basicInfo.durationTime * pricePerMin) + totalCleaningToolFee;
+
+  return totalFee;
+}
 
 const initBasicJobInfo = async function (req, res) {
   const user_id = ObjectId(req.user._id);
@@ -231,7 +323,6 @@ const downloadPdfBill = async function (req, res) {
     "https://blog.risingstack.com/pdf-from-html-node-js-puppeteer/"
   );
   const result = await page.screenshot({ path: "example.png" });
-  console.log("result @@@ ", result);
   await browser.close();
   res.send({
     error: 0,
