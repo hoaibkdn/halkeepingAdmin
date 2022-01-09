@@ -68,11 +68,17 @@ const jobSchema = new Schema(
     },
     createdAt: {
       type: Date,
-      default: Date.now(),
+      default: new Date(),
     },
     updatedAt: {
       type: Date,
-      default: Date.now(),
+      default: new Date(),
+    },
+    cleaningToolFee: {
+      type: String,
+    },
+    total: {
+      type: Number,
     },
   },
   { timestamps: { createdAt: true, updatedAt: true } }

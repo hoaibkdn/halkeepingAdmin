@@ -28,8 +28,8 @@ app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Credentials", true);
 
   if (
-    req.url === "/api/login" ||
-    req.url === "/api/register" ||
+    req.url.includes("/api/login") ||
+    req.url.includes("/api/register") ||
     req.url.includes("api/sections/get-section") ||
     req.url.includes("api/sections/get-batch-sections") ||
     req.url.includes("api/product/get") ||

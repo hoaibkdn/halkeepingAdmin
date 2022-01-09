@@ -5,9 +5,13 @@ const puppeteer = require("puppeteer");
 var ObjectId = require("mongodb").ObjectID;
 
 const getAllJobs = async function (req, res) {
+  const offset = Number(req.query.offset || 0);
+  const limit = Number(req.query.limit || 10);
+
   db.get()
     .collection("job")
     .aggregate([
+      { $sort: { updatedAt: -1 } },
       {
         $lookup: {
           from: "customer",
@@ -16,7 +20,12 @@ const getAllJobs = async function (req, res) {
           as: "customer",
         },
       },
-      { $sort: { updatedAt: -1 } },
+      {
+        $skip: offset,
+      },
+      {
+        $limit: limit,
+      },
       // {
       //   $lookup: {
       //     from: "cleaner",
@@ -32,7 +41,9 @@ const getAllJobs = async function (req, res) {
         res.send({
           data: {
             error: 0,
-            ...jobs,
+            jobs,
+            hasMore: jobs.length === limit,
+            offset: offset + jobs.length,
           },
         });
         return;
@@ -88,13 +99,23 @@ const createNewJob = async function (req, res, next) {
       address: req.body.address,
     })
   );
-
+  const cleaningTool = req.body.cleaningTool;
+  const [priceInfo, paymentMethod, cleaningToolFee] = await getBasicFeeDb();
+  const total = calculateTotalFee(
+    {
+      durationTime: req.body.durationTime,
+      cleaningTool,
+    },
+    priceInfo,
+    cleaningToolFee
+  );
   const job = new Job({
     ...req.body,
     customerId: insertedCustomer._id,
+    total,
+    cleaningToolFee: JSON.stringify(cleaningToolFee),
   });
-  const cleaningTool = req.body.cleaningTool;
-  const [priceInfo, paymentMethod, cleaningToolFee] = await getBasicFeeDb();
+  console.log(job);
   try {
     db.get()
       .collection("job")
@@ -110,15 +131,6 @@ const createNewJob = async function (req, res, next) {
               customer: insertedCustomer,
               priceInfo,
               paymentMethod,
-              cleaningToolFee,
-              total: calculateTotalFee(
-                {
-                  durationTime: req.body.durationTime,
-                  cleaningTool,
-                },
-                priceInfo,
-                cleaningToolFee
-              ),
             },
           },
         });
