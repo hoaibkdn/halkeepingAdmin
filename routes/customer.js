@@ -7,4 +7,6 @@ const CustomerController = require("./../controllers/CustomerController");
 
 router.post("/add-customer", CustomerController.addCustomer);
 
+router.get("/get", CustomerController.getAllCustomers);
+
 module.exports = router;

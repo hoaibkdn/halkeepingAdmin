@@ -38,6 +38,7 @@ app.use(function (req, res, next) {
     req.url.includes("api/product/search") ||
     req.url.includes("api/sections/send-checkin") ||
     req.url.includes("api/job/create") ||
+    req.url.includes("api/customer/get") ||
     req.url.includes("api/provinces") ||
     req.url.includes("api/job/basic-info")
   ) {
