@@ -1,6 +1,7 @@
 const { MongoClient } = require("mongodb");
 const url =
-  "mongodb+srv://hoaitruong:UtCung13@cluster0.mevlx.mongodb.net/halkeeping?retryWrites=true&w=majority";
+  // "mongodb+srv://hoaitruong:UtCung13@cluster0.mevlx.mongodb.net/halkeeping?retryWrites=true&w=majority";
+  "mongodb+srv://halkeeping:Hnh1234@cluster0.qmus1.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
 // const url = 'mongodb+srv://halStorm:UtCung13@cluster0.k4irp.mongodb.net/halgroup?retryWrites=true&w=majority'
 const client = new MongoClient(
   url,
