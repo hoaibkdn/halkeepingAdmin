@@ -149,7 +149,8 @@ const editJob = async function (req, res) {
     editedData.customerId = new ObjectId(req.body.customerId);
   }
   if (req.body.cleanerId) {
-    editedData.cleanerId = new ObjectId(req.body.cleanerId);
+    const cleanerId = req.body.cleanerId
+    editedData.cleanerId = cleanerId.map(id => new ObjectId(id))
   }
   const result = await db
     .get()
