@@ -11,7 +11,7 @@ const jobSchema = new Schema(
       required: false,
     },
     cleanerId: {
-      type: ObjectId,
+      type: [ObjectId],
       required: false,
     },
     preferDate: {
