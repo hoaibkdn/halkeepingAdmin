@@ -115,7 +115,7 @@ const createNewJob = async function (req, res, next) {
     total,
     cleaningToolFee: JSON.stringify(cleaningToolFee),
   });
-  console.log(job);
+
   try {
     db.get()
       .collection("job")
@@ -149,8 +149,8 @@ const editJob = async function (req, res) {
     editedData.customerId = new ObjectId(req.body.customerId);
   }
   if (req.body.cleanerId) {
-    const cleanerId = req.body.cleanerId
-    editedData.cleanerId = cleanerId.map(id => new ObjectId(id))
+    const cleanerId = req.body.cleanerId;
+    editedData.cleanerId = cleanerId.map((id) => new ObjectId(id));
   }
   const result = await db
     .get()
@@ -197,20 +197,63 @@ async function getBasicFeeDb() {
   };
 
   try {
-    priceInfo = await db.get().collection("price_per_hour").findOne();
+    const priceDb = await db.get().collection("price_per_hour").findOne();
+    priceInfo = {
+      ...priceDb,
+      one_hour: Number(priceDb.one_hour),
+      from_two_hour: Number(priceDb.from_two_hour),
+    };
+
     paymentMethod = await db
       .get()
       .collection("payment_method")
       .find()
       .toArray();
-    cleaningToolFee = await db
+    const cleaningToolsFeeDb = await db
       .get()
       .collection("price_cleaning_tool")
       .findOne();
+    cleaningToolFee = {
+      ...cleaningToolsFeeDb,
+      basic: Number(cleaningToolsFeeDb.basic),
+      vacuum: Number(cleaningToolsFeeDb.vacuum),
+    };
   } catch (e) {
     return [priceInfo, paymentMethod, cleaningToolFee];
   }
   return [priceInfo, paymentMethod, cleaningToolFee];
+}
+
+async function editPriceInfo(req, res) {
+  const id = new ObjectId(req.params.id);
+  const priceEdit = req.body;
+  const result = await db.get().collection("price_per_hour").updateOne(
+    {
+      _id: id,
+    },
+    {
+      $set: priceEdit,
+    }
+  );
+  if (result.matchedCount === 1) {
+    res.send({
+      data: {
+        error: 0,
+        message: "Update price info successfully",
+        priceInfo: {
+          id,
+          ...priceEdit,
+        },
+      },
+    });
+    return;
+  }
+  res.send({
+    data: {
+      error: 1,
+      message: "Id is incorrect",
+    },
+  });
 }
 
 /* body: 
@@ -271,6 +314,7 @@ const getBasicJobInfo = async function (req, res) {
 };
 
 // Calculate total fee
+const MIN_TIME = 120;
 function calculateTotalFee(basicInfoReq, priceInfo, cleaningToolFee) {
   const basicInfo = {
     durationTime: basicInfoReq.durationTime
@@ -284,11 +328,15 @@ function calculateTotalFee(basicInfoReq, priceInfo, cleaningToolFee) {
     },
   };
   const usingPrice =
-    basicInfo.durationTime <= 60 ? priceInfo.one_hour : priceInfo.from_two_hour;
+    basicInfo.durationTime < MIN_TIME
+      ? priceInfo.one_hour
+      : priceInfo.from_two_hour;
+
   const pricePerMin = usingPrice / 60;
   const totalCleaningToolFee =
     basicInfo.cleaningTool.basic * cleaningToolFee.basic +
     basicInfo.cleaningTool.vacuum * cleaningToolFee.vacuum;
+
   const totalFee =
     Math.round(basicInfo.durationTime * pricePerMin) + totalCleaningToolFee;
 
@@ -349,4 +397,5 @@ module.exports = {
   downloadPdfBill,
   getBasicJobInfo,
   initBasicJobInfo,
+  editPriceInfo,
 };
