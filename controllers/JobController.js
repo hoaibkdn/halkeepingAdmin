@@ -278,7 +278,12 @@ function getValidWorkingTime(timeStamp, timeZone) {
   const localTimezone = (new Date().getTimezoneOffset() / 60) * -1;
   const clienTimeZone = timeZone || localTimezone;
   const localTimeOffset = localTimezone * 60 * 60 * 1000;
-  const sendingTimeStamp = timeStamp || Date.now() + localTimeOffset;
+  const sendingTimeStamp =
+    timeStamp && localTimezone === clienTimeZone
+      ? timeStamp
+      : timeStamp
+      ? timeStamp * Math.abs(localTimezone - clienTimeZone)
+      : Date.now() + localTimeOffset;
   const ARRANGEMENT_TIME = 3 * 60 * 60 * 1000;
   const managerWorkingTime = getRangeWorkingTime(
     { timeStamp: sendingTimeStamp, timeZone: clienTimeZone },
@@ -389,7 +394,13 @@ const getBasicJobInfo = async function (req, res) {
         payment_method: paymentMethod,
         cleaning_tool_fee: cleaningToolFee,
         total: totalFee,
-        validWorkingTime,
+        validWorkingTime: {
+          ...validWorkingTime,
+          dailyCleanerWorking: {
+            start: CLEANER_WORKING_TIME.START,
+            end: CLEANER_WORKING_TIME.END,
+          },
+        },
       },
     });
     return;
