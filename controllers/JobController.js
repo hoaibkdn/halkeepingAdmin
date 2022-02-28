@@ -3,6 +3,8 @@ const Customer = require("./../models/Customer");
 const db = require("./../db");
 const puppeteer = require("puppeteer");
 var ObjectId = require("mongodb").ObjectID;
+const { getRangeWorkingTime } = require("./../utils");
+const { MANAGER_WORKING_TIME, CLEANER_WORKING_TIME } = require("./../constant");
 
 const getAllJobs = async function (req, res) {
   const offset = Number(req.query.offset || 0);
@@ -256,7 +258,88 @@ async function editPriceInfo(req, res) {
   });
 }
 
-/* body: 
+/* 
+  * If sending timestamp (ST)
+  1. manager workingtime (MW): 7am-10pm 
+  2. cleaner workingtime (CW): 8am-7pm
+  - ST C- MW: workingtime allowment =
+    if(ST + 3 C- CW) {
+      return [ST + 3 -> end_CW]
+    }
+    if (ST + 3 > end_CW) {
+      return [CW] of next day
+    }
+    return [CW] of today 
+  - ST !C- MW 
+    return next cleaner workingtime + 2: [start_CW + 2 -> end_CW]
+*/
+function getValidWorkingTime(timeStamp, timeZone) {
+  // calculate valid workingtime
+  const localTimezone = (new Date().getTimezoneOffset() / 60) * -1;
+  const clienTimeZone = timeZone || localTimezone;
+  const localTimeOffset = localTimezone * 60 * 60 * 1000;
+  const sendingTimeStamp = timeStamp || Date.now() + localTimeOffset;
+  const ARRANGEMENT_TIME = 3 * 60 * 60 * 1000;
+  const managerWorkingTime = getRangeWorkingTime(
+    { timeStamp: sendingTimeStamp, timeZone: clienTimeZone },
+    MANAGER_WORKING_TIME
+  );
+  const cleanerWorkingTime = getRangeWorkingTime(
+    { timeStamp: sendingTimeStamp, timeZone: clienTimeZone },
+    CLEANER_WORKING_TIME
+  );
+
+  // ST C- MW
+  if (
+    sendingTimeStamp >= managerWorkingTime.start &&
+    sendingTimeStamp <= managerWorkingTime.end
+  ) {
+    const extendedTime = sendingTimeStamp + ARRANGEMENT_TIME;
+    // if(ST + 3 C- CW) {
+    //   return [ST + 3 -> end_CW]
+    // }
+    if (
+      extendedTime >= cleanerWorkingTime.start &&
+      extendedTime <= cleanerWorkingTime.end
+    ) {
+      return {
+        start: extendedTime,
+        end: cleanerWorkingTime.end,
+        timeZone: clienTimeZone,
+      };
+    }
+
+    // if (ST + 3 > end_CW) {
+    //   return [CW] of next day
+    // }
+    if (extendedTime > cleanerWorkingTime.end) {
+      const oneDate = 24 * 60 * 60 * 1000;
+      const tmr = new Date(sendingTimeStamp + oneDate);
+      return {
+        ...getRangeWorkingTime({ timeStamp: tmr }, CLEANER_WORKING_TIME),
+        timeZone: clienTimeZone,
+      };
+    }
+
+    // return [CW] of today
+    return cleanerWorkingTime;
+  }
+
+  // - ST !C- MW
+  // return next cleaner workingtime + 2: [start_CW + 2 -> end_CW]
+  return {
+    ...getRangeWorkingTime(
+      { timeStamp: sendingTimeStamp, timeZone: clienTimeZone },
+      {
+        ...CLEANER_WORKING_TIME,
+        START: CLEANER_WORKING_TIME.START + 2,
+      }
+    ),
+  };
+}
+
+/*
+  body: 
   {
     durationTime: 150,
     cleaningTool: {
@@ -275,6 +358,16 @@ async function editPriceInfo(req, res) {
   }
 */
 const getBasicJobInfo = async function (req, res) {
+  // calculate valid workingtime
+  const clienTimeZone = req.body.requestedTime?.timeZone
+    ? Number(req.body.requestedTime?.timeZone)
+    : null;
+  const sendingTimeStamp = req.body.requestedTime?.timeStamp
+    ? Number(req.body.requestedTime?.timeStamp)
+    : null;
+
+  const validWorkingTime = getValidWorkingTime(sendingTimeStamp, clienTimeZone);
+
   // basic info default
   const [priceInfo, paymentMethod, cleaningToolFee] = await getBasicFeeDb();
   try {
@@ -296,6 +389,7 @@ const getBasicJobInfo = async function (req, res) {
         payment_method: paymentMethod,
         cleaning_tool_fee: cleaningToolFee,
         total: totalFee,
+        validWorkingTime,
       },
     });
     return;
