@@ -78,9 +78,38 @@ function convertStringArrToArray(stringArr = "") {
   return stringArr.split(",");
 }
 
+function getRangeWorkingTime(date, rangeWorkingTime) {
+  const localTimezone = (new Date().getTimezoneOffset() / 60) * -1;
+  const { timeStamp, timeZone } = date;
+  const clienTimeZone = timeZone || localTimezone;
+  const dateTime = new Date(timeStamp);
+  const dateOfMonth = dateTime.getDate();
+  const month = dateTime.getMonth();
+  const year = dateTime.getFullYear();
+  return {
+    start: new Date(
+      year,
+      month,
+      dateOfMonth,
+      rangeWorkingTime.START + clienTimeZone,
+      0,
+      0
+    ).getTime(),
+    end: new Date(
+      year,
+      month,
+      dateOfMonth,
+      rangeWorkingTime.END + clienTimeZone,
+      0,
+      0
+    ).getTime(),
+  };
+}
+
 module.exports = {
   checkAuthorization,
   mergeS3Parram,
   mapS3ImageToConvertedData,
   convertStringArrToArray,
+  getRangeWorkingTime,
 };

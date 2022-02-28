@@ -3,6 +3,8 @@ const Customer = require("./../models/Customer");
 const db = require("./../db");
 const puppeteer = require("puppeteer");
 var ObjectId = require("mongodb").ObjectID;
+const { getRangeWorkingTime } = require("./../utils");
+const { MANAGER_WORKING_TIME, CLEANER_WORKING_TIME } = require("./../constant");
 
 const getAllJobs = async function (req, res) {
   const offset = Number(req.query.offset || 0);
@@ -115,7 +117,7 @@ const createNewJob = async function (req, res, next) {
     total,
     cleaningToolFee: JSON.stringify(cleaningToolFee),
   });
-  console.log(job);
+
   try {
     db.get()
       .collection("job")
@@ -149,8 +151,8 @@ const editJob = async function (req, res) {
     editedData.customerId = new ObjectId(req.body.customerId);
   }
   if (req.body.cleanerId) {
-    const cleanerId = req.body.cleanerId
-    editedData.cleanerId = cleanerId.map(id => new ObjectId(id))
+    const cleanerId = req.body.cleanerId;
+    editedData.cleanerId = cleanerId.map((id) => new ObjectId(id));
   }
   const result = await db
     .get()
@@ -197,23 +199,147 @@ async function getBasicFeeDb() {
   };
 
   try {
-    priceInfo = await db.get().collection("price_per_hour").findOne();
+    const priceDb = await db.get().collection("price_per_hour").findOne();
+    priceInfo = {
+      ...priceDb,
+      one_hour: Number(priceDb.one_hour),
+      from_two_hour: Number(priceDb.from_two_hour),
+    };
+
     paymentMethod = await db
       .get()
       .collection("payment_method")
       .find()
       .toArray();
-    cleaningToolFee = await db
+    const cleaningToolsFeeDb = await db
       .get()
       .collection("price_cleaning_tool")
       .findOne();
+    cleaningToolFee = {
+      ...cleaningToolsFeeDb,
+      basic: Number(cleaningToolsFeeDb.basic),
+      vacuum: Number(cleaningToolsFeeDb.vacuum),
+    };
   } catch (e) {
     return [priceInfo, paymentMethod, cleaningToolFee];
   }
   return [priceInfo, paymentMethod, cleaningToolFee];
 }
 
-/* body: 
+async function editPriceInfo(req, res) {
+  const id = new ObjectId(req.params.id);
+  const priceEdit = req.body;
+  const result = await db.get().collection("price_per_hour").updateOne(
+    {
+      _id: id,
+    },
+    {
+      $set: priceEdit,
+    }
+  );
+  if (result.matchedCount === 1) {
+    res.send({
+      data: {
+        error: 0,
+        message: "Update price info successfully",
+        priceInfo: {
+          id,
+          ...priceEdit,
+        },
+      },
+    });
+    return;
+  }
+  res.send({
+    data: {
+      error: 1,
+      message: "Id is incorrect",
+    },
+  });
+}
+
+/* 
+  * If sending timestamp (ST)
+  1. manager workingtime (MW): 7am-10pm 
+  2. cleaner workingtime (CW): 8am-7pm
+  - ST C- MW: workingtime allowment =
+    if(ST + 3 C- CW) {
+      return [ST + 3 -> end_CW]
+    }
+    if (ST + 3 > end_CW) {
+      return [CW] of next day
+    }
+    return [CW] of today 
+  - ST !C- MW 
+    return next cleaner workingtime + 2: [start_CW + 2 -> end_CW]
+*/
+function getValidWorkingTime(timeStamp, timeZone) {
+  // calculate valid workingtime
+  const localTimezone = (new Date().getTimezoneOffset() / 60) * -1;
+  const clienTimeZone = timeZone || localTimezone;
+  const localTimeOffset = localTimezone * 60 * 60 * 1000;
+  const sendingTimeStamp = timeStamp || Date.now() + localTimeOffset;
+  const ARRANGEMENT_TIME = 3 * 60 * 60 * 1000;
+  const managerWorkingTime = getRangeWorkingTime(
+    { timeStamp: sendingTimeStamp, timeZone: clienTimeZone },
+    MANAGER_WORKING_TIME
+  );
+  const cleanerWorkingTime = getRangeWorkingTime(
+    { timeStamp: sendingTimeStamp, timeZone: clienTimeZone },
+    CLEANER_WORKING_TIME
+  );
+
+  // ST C- MW
+  if (
+    sendingTimeStamp >= managerWorkingTime.start &&
+    sendingTimeStamp <= managerWorkingTime.end
+  ) {
+    const extendedTime = sendingTimeStamp + ARRANGEMENT_TIME;
+    // if(ST + 3 C- CW) {
+    //   return [ST + 3 -> end_CW]
+    // }
+    if (
+      extendedTime >= cleanerWorkingTime.start &&
+      extendedTime <= cleanerWorkingTime.end
+    ) {
+      return {
+        start: extendedTime,
+        end: cleanerWorkingTime.end,
+        timeZone: clienTimeZone,
+      };
+    }
+
+    // if (ST + 3 > end_CW) {
+    //   return [CW] of next day
+    // }
+    if (extendedTime > cleanerWorkingTime.end) {
+      const oneDate = 24 * 60 * 60 * 1000;
+      const tmr = new Date(sendingTimeStamp + oneDate);
+      return {
+        ...getRangeWorkingTime({ timeStamp: tmr }, CLEANER_WORKING_TIME),
+        timeZone: clienTimeZone,
+      };
+    }
+
+    // return [CW] of today
+    return cleanerWorkingTime;
+  }
+
+  // - ST !C- MW
+  // return next cleaner workingtime + 2: [start_CW + 2 -> end_CW]
+  return {
+    ...getRangeWorkingTime(
+      { timeStamp: sendingTimeStamp, timeZone: clienTimeZone },
+      {
+        ...CLEANER_WORKING_TIME,
+        START: CLEANER_WORKING_TIME.START + 2,
+      }
+    ),
+  };
+}
+
+/*
+  body: 
   {
     durationTime: 150,
     cleaningTool: {
@@ -232,6 +358,16 @@ async function getBasicFeeDb() {
   }
 */
 const getBasicJobInfo = async function (req, res) {
+  // calculate valid workingtime
+  const clienTimeZone = req.body.requestedTime?.timeZone
+    ? Number(req.body.requestedTime?.timeZone)
+    : null;
+  const sendingTimeStamp = req.body.requestedTime?.timeStamp
+    ? Number(req.body.requestedTime?.timeStamp)
+    : null;
+
+  const validWorkingTime = getValidWorkingTime(sendingTimeStamp, clienTimeZone);
+
   // basic info default
   const [priceInfo, paymentMethod, cleaningToolFee] = await getBasicFeeDb();
   try {
@@ -253,6 +389,7 @@ const getBasicJobInfo = async function (req, res) {
         payment_method: paymentMethod,
         cleaning_tool_fee: cleaningToolFee,
         total: totalFee,
+        validWorkingTime,
       },
     });
     return;
@@ -271,6 +408,7 @@ const getBasicJobInfo = async function (req, res) {
 };
 
 // Calculate total fee
+const MIN_TIME = 120;
 function calculateTotalFee(basicInfoReq, priceInfo, cleaningToolFee) {
   const basicInfo = {
     durationTime: basicInfoReq.durationTime
@@ -284,11 +422,15 @@ function calculateTotalFee(basicInfoReq, priceInfo, cleaningToolFee) {
     },
   };
   const usingPrice =
-    basicInfo.durationTime <= 60 ? priceInfo.one_hour : priceInfo.from_two_hour;
+    basicInfo.durationTime < MIN_TIME
+      ? priceInfo.one_hour
+      : priceInfo.from_two_hour;
+
   const pricePerMin = usingPrice / 60;
   const totalCleaningToolFee =
     basicInfo.cleaningTool.basic * cleaningToolFee.basic +
     basicInfo.cleaningTool.vacuum * cleaningToolFee.vacuum;
+
   const totalFee =
     Math.round(basicInfo.durationTime * pricePerMin) + totalCleaningToolFee;
 
@@ -349,4 +491,5 @@ module.exports = {
   downloadPdfBill,
   getBasicJobInfo,
   initBasicJobInfo,
+  editPriceInfo,
 };
