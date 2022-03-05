@@ -427,7 +427,7 @@ function sendEmail(req, res) {
     secure: true,
     auth: {
       user: "halStorm13@gmail.com",
-      pass: "hoaithu102120176",
+      pass: "xxxxxx",
     },
   });
 
