@@ -107,6 +107,9 @@ const createNewJob = async function (req, res, next) {
     {
       durationTime: req.body.durationTime,
       cleaningTool,
+      numberOfCleaners: req.body.numberOfCleaners
+        ? Number(req.body.numberOfCleaners)
+        : 1,
     },
     priceInfo,
     cleaningToolFee
@@ -206,11 +209,12 @@ async function getBasicFeeDb() {
       from_two_hour: Number(priceDb.from_two_hour),
     };
 
-    paymentMethod = await db
+    const paymentMethodDb = await db
       .get()
       .collection("payment_method")
       .find()
       .toArray();
+    paymentMethod = paymentMethodDb.length ? paymentMethodDb : paymentMethod;
     const cleaningToolsFeeDb = await db
       .get()
       .collection("price_cleaning_tool")
@@ -375,6 +379,7 @@ const getBasicJobInfo = async function (req, res) {
 
   // basic info default
   const [priceInfo, paymentMethod, cleaningToolFee] = await getBasicFeeDb();
+
   try {
     // Save user info
     if (req.body.customer) {
@@ -390,9 +395,9 @@ const getBasicJobInfo = async function (req, res) {
     res.send({
       error: 0,
       data: {
-        price_per_hour: priceInfo,
-        payment_method: paymentMethod,
-        cleaning_tool_fee: cleaningToolFee,
+        pricePerHour: priceInfo,
+        paymentMethod,
+        cleaningToolFee: cleaningToolFee,
         total: totalFee,
         validWorkingTime: {
           ...validWorkingTime,
@@ -401,6 +406,7 @@ const getBasicJobInfo = async function (req, res) {
             end: CLEANER_WORKING_TIME.END,
           },
         },
+        numberOfCleaners: req.body.numberOfCleaners || 1,
       },
     });
     return;
@@ -408,11 +414,9 @@ const getBasicJobInfo = async function (req, res) {
     res.send({
       error: e,
       data: {
-        data: {
-          price_per_hour: priceInfo,
-          payment_method: paymentMethod,
-          cleaning_tool_fee: cleaningToolFee,
-        },
+        pricePerHour: priceInfo,
+        paymentMethod,
+        cleaningToolFee,
       },
     });
   }
@@ -431,6 +435,9 @@ function calculateTotalFee(basicInfoReq, priceInfo, cleaningToolFee) {
       vacuum:
         basicInfoReq.cleaningTool && basicInfoReq.cleaningTool.vacuum ? 1 : 0,
     },
+    numberOfCleaners: basicInfoReq.numberOfCleaners
+      ? Number(basicInfoReq.numberOfCleaners)
+      : 1,
   };
   const usingPrice =
     basicInfo.durationTime < MIN_TIME
@@ -443,7 +450,9 @@ function calculateTotalFee(basicInfoReq, priceInfo, cleaningToolFee) {
     basicInfo.cleaningTool.vacuum * cleaningToolFee.vacuum;
 
   const totalFee =
-    Math.round(basicInfo.durationTime * pricePerMin) + totalCleaningToolFee;
+    Math.round(basicInfo.durationTime * pricePerMin) *
+      basicInfo.numberOfCleaners +
+    totalCleaningToolFee;
 
   return totalFee;
 }
