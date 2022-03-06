@@ -281,6 +281,7 @@ const hourMillisecond = 60 * 60 * 1000;
 function getValidWorkingTime(timeStamp, timeZone) {
   // calculate valid workingtime
   const clienTimeZone = timeZone;
+  const oneDate = 24 * 60 * 60 * 1000;
 
   // const sendingTimeStamp =
   //   timeStamp && localTimezone === clienTimeZone
@@ -325,7 +326,7 @@ function getValidWorkingTime(timeStamp, timeZone) {
     // }
     if (extendedTime > cleanerWorkingTime.end) {
       const oneDate = 24 * 60 * 60 * 1000;
-      const tmr = new Date(sendingTimeStamp + oneDate);
+      const tmr = sendingTimeStamp + oneDate;
       return {
         ...getRangeWorkingTime({ timeStamp: tmr }, CLEANER_WORKING_TIME),
         timeZone: clienTimeZone,
@@ -340,10 +341,10 @@ function getValidWorkingTime(timeStamp, timeZone) {
   // return next cleaner workingtime + 2: [start_CW + 2 -> end_CW]
   return {
     ...getRangeWorkingTime(
-      { timeStamp: sendingTimeStamp, timeZone: clienTimeZone },
+      { timeStamp: sendingTimeStamp + oneDate, timeZone: clienTimeZone },
       {
         ...CLEANER_WORKING_TIME,
-        START: CLEANER_WORKING_TIME.START + 2,
+        START: CLEANER_WORKING_TIME.START + 3, // 3h for Manager arrange cleaners
       }
     ),
   };
