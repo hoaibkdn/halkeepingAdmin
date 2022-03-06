@@ -79,9 +79,7 @@ function convertStringArrToArray(stringArr = "") {
 }
 
 function getRangeWorkingTime(date, rangeWorkingTime) {
-  const localTimezone = (new Date().getTimezoneOffset() / 60) * -1;
-  const { timeStamp, timeZone } = date;
-  const clienTimeZone = timeZone || localTimezone;
+  const { timeStamp } = date;
   const dateTime = new Date(timeStamp);
   const dateOfMonth = dateTime.getDate();
   const month = dateTime.getMonth();
@@ -91,7 +89,7 @@ function getRangeWorkingTime(date, rangeWorkingTime) {
       year,
       month,
       dateOfMonth,
-      rangeWorkingTime.START + clienTimeZone,
+      rangeWorkingTime.START,
       0,
       0
     ).getTime(),
@@ -99,7 +97,7 @@ function getRangeWorkingTime(date, rangeWorkingTime) {
       year,
       month,
       dateOfMonth,
-      rangeWorkingTime.END + clienTimeZone,
+      rangeWorkingTime.END,
       0,
       0
     ).getTime(),

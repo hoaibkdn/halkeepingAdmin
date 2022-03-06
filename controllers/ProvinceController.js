@@ -18,6 +18,22 @@ function getProvinces(req, res) {
     });
 }
 
+function getAllProvinces(req, res) {
+  const code = req.query.code || PROVINCE_CODE.DA_NANG;
+
+  const queryParams = "?depth=3";
+  fetch(provinceHost + queryParams)
+    .then((res) => res.text())
+    .then((text) => {
+      const allProvinces = JSON.parse(text);
+      res.send({
+        error: 0,
+        allProvinces,
+      });
+    });
+}
+
 module.exports = {
   getProvinces,
+  getAllProvinces,
 };

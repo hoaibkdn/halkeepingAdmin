@@ -277,18 +277,20 @@ async function editPriceInfo(req, res) {
   - ST !C- MW 
     return next cleaner workingtime + 2: [start_CW + 2 -> end_CW]
 */
+const hourMillisecond = 60 * 60 * 1000;
 function getValidWorkingTime(timeStamp, timeZone) {
   // calculate valid workingtime
-  const localTimezone = (new Date().getTimezoneOffset() / 60) * -1;
-  const clienTimeZone = timeZone || localTimezone;
-  const localTimeOffset = localTimezone * 60 * 60 * 1000;
-  const sendingTimeStamp =
-    timeStamp && localTimezone === clienTimeZone
-      ? timeStamp
-      : timeStamp
-      ? timeStamp * Math.abs(localTimezone - clienTimeZone)
-      : Date.now() + localTimeOffset;
-  const ARRANGEMENT_TIME = 3 * 60 * 60 * 1000;
+  const clienTimeZone = timeZone;
+
+  // const sendingTimeStamp =
+  //   timeStamp && localTimezone === clienTimeZone
+  //     ? timeStamp
+  //     : timeStamp
+  //     ? zeroTimeZoneForClientTS
+  //     : Date.now() + localTimeOffset;
+  const sendingTimeStamp = timeStamp || Date.now();
+
+  const ARRANGEMENT_TIME = 3 * hourMillisecond;
   const managerWorkingTime = getRangeWorkingTime(
     { timeStamp: sendingTimeStamp, timeZone: clienTimeZone },
     MANAGER_WORKING_TIME
