@@ -16,6 +16,7 @@ const productRoute = require("./routes/product");
 const categoryRoute = require("./routes/category");
 const blogRoute = require("./routes/blog");
 const provinceRoute = require("./routes/province");
+const paymentMethodsRoute = require("./routes/paymentMethod");
 const utils = require("./utils");
 const db = require("./db");
 
@@ -76,5 +77,6 @@ db.connect(() => {
     app.use("/api/category", categoryRoute);
     app.use("/api/blog", blogRoute);
     app.use("/api/provinces", provinceRoute);
+    app.use("/api/paymentmethods", paymentMethodsRoute);
   });
 });

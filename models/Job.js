@@ -77,6 +77,10 @@ const jobSchema = new Schema(
     cleaningToolFee: {
       type: String,
     },
+    numberOfCleaners: {
+      type: Number,
+      default: 1,
+    },
     total: {
       type: Number,
     },
