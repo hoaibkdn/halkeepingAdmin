@@ -174,6 +174,7 @@ const editJob = async function (req, res) {
       data: {
         error: 0,
         message: "Updated successfully",
+        data: editedData,
       },
     });
     return;
@@ -494,6 +495,53 @@ const initBasicJobInfo = async function (req, res) {
   }
 };
 
+function getJobDetail(req, res) {
+  const jobId = new ObjectId(req.params.jobId || 0);
+  db.get()
+    .collection("job")
+    .aggregate([
+      { $match: { _id: jobId } },
+      {
+        $lookup: {
+          from: "customer",
+          localField: "customerId",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+      {
+        $limit: 1,
+      },
+      {
+        $lookup: {
+          from: "cleaner",
+          localField: "cleanerId",
+          foreignField: "_id",
+          as: "cleaner",
+        },
+      },
+    ])
+    .toArray()
+    .then((jobs) => {
+      if (jobs) {
+        res.send({
+          data: {
+            error: 0,
+            message: "Get job successfully",
+            job: jobs.length ? jobs[0] : null,
+          },
+        });
+        return;
+      }
+      res.send({
+        data: {
+          error: 1,
+          message: "Get job error",
+        },
+      });
+    });
+}
+
 const downloadPdfBill = async function (req, res) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -515,4 +563,5 @@ module.exports = {
   getBasicJobInfo,
   initBasicJobInfo,
   editPriceInfo,
+  getJobDetail,
 };

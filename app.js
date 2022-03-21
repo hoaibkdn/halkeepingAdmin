@@ -16,6 +16,7 @@ const productRoute = require("./routes/product");
 const categoryRoute = require("./routes/category");
 const blogRoute = require("./routes/blog");
 const provinceRoute = require("./routes/province");
+const paymentMethodsRoute = require("./routes/paymentMethod");
 const utils = require("./utils");
 const db = require("./db");
 
@@ -38,8 +39,6 @@ app.use(function (req, res, next) {
     req.url.includes("api/product/search") ||
     req.url.includes("api/sections/send-checkin") ||
     req.url.includes("api/job") ||
-    req.url.includes("api/customer") ||
-    req.url.includes("api/cleaner") ||
     req.url.includes("api/provinces") ||
     req.url.includes("api/job/basic-info")
   ) {
@@ -78,5 +77,6 @@ db.connect(() => {
     app.use("/api/category", categoryRoute);
     app.use("/api/blog", blogRoute);
     app.use("/api/provinces", provinceRoute);
+    app.use("/api/paymentmethods", paymentMethodsRoute);
   });
 });

@@ -11,4 +11,5 @@ router.get("/init", JobController.initBasicJobInfo);
 router.post("/edit/:jobId", JobController.editJob);
 router.get("/download", JobController.downloadPdfBill);
 router.post("/edit-price/:id", JobController.editPriceInfo);
+router.get("/detail/:jobId", JobController.getJobDetail);
 module.exports = router;
