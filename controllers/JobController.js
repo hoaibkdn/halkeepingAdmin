@@ -174,6 +174,7 @@ const editJob = async function (req, res) {
       data: {
         error: 0,
         message: "Updated successfully",
+        data: editedData,
       },
     });
     return;
