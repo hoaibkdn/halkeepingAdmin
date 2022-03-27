@@ -42,10 +42,8 @@ async function addPaymentMethod(req, res) {
       );
       if (result.matchedCount === 1 || result.upsertedCount === 1) {
         res.send({
-          data: {
-            error: 0,
-            message: "Updated successfully",
-          },
+          error: 0,
+          message: "Updated successfully",
         });
         return;
       }
@@ -55,19 +53,15 @@ async function addPaymentMethod(req, res) {
         .collection("payment_method")
         .insertOne(method);
       res.send({
-        data: {
-          error: 0,
-          message: "Add successfully",
-        },
+        error: 0,
+        message: "Add successfully",
       });
       return;
     }
   } catch (e) {
     res.send({
-      data: {
-        error: 1,
-        message: "There is an error occur",
-      },
+      error: 1,
+      message: "There is an error occur",
     });
   }
 }

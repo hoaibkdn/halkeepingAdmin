@@ -157,6 +157,23 @@ const editJob = async function (req, res) {
     const cleanerId = req.body.cleanerId;
     editedData.cleanerId = cleanerId.map((id) => new ObjectId(id));
   }
+
+  // re-calculate the total price
+  const priceInfo = {
+    one_hour: Number(editedData.pricePerHour),
+    from_two_hour: Number(editedData.pricePerHour),
+  };
+
+  const cleaningToolFee = JSON.parse(editedData.cleaningToolFee);
+  const basicInfo = {
+    durationTime: Number(editedData.durationTime),
+    cleaningTool: editedData.cleaningTool,
+    numberOfCleaners: editedData.numberOfCleaners
+      ? Number(editedData.numberOfCleaners)
+      : 1,
+  };
+  const totalPrice = calculateTotalFee(basicInfo, priceInfo, cleaningToolFee);
+
   const result = await db
     .get()
     .collection("job")
@@ -165,16 +182,19 @@ const editJob = async function (req, res) {
         _id: new ObjectId(req.params.jobId),
       },
       {
-        $set: editedData,
+        $set: { ...editedData, total: totalPrice },
       },
       { upsert: true }
     );
   if (result.matchedCount === 1) {
+    console.log({
+      result,
+    });
     res.send({
       data: {
         error: 0,
         message: "Updated successfully",
-        data: editedData,
+        data: { ...editedData, total: totalPrice },
       },
     });
     return;
