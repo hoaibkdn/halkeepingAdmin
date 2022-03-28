@@ -6,5 +6,5 @@ const PaymentMethodsController = require("./../controllers/PaymentMethodsControl
 
 router.get("/", PaymentMethodsController.getAllPaymentMethods);
 router.post("/add", PaymentMethodsController.addPaymentMethod);
-
+router.delete("/delete/:paymentId", PaymentMethodsController.deletePaymentMethod);
 module.exports = router;

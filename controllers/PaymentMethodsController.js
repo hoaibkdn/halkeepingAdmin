@@ -66,7 +66,32 @@ async function addPaymentMethod(req, res) {
   }
 }
 
+async function deletePaymentMethod(req, res) {
+  const paymentId = req.params.paymentId;
+
+  if (paymentId) {
+    await db
+      .get()
+      .collection("payment_method")
+      .deleteOne({ _id: ObjectId(paymentId) }, true);
+    res.send({
+      data: {
+        error: 0,
+        message: "Delete successfully",
+      },
+    });
+    return;
+  }
+  res.send({
+    data: {
+      error: 1,
+      message: "No payment corresponding",
+    },
+  });
+}
+
 module.exports = {
   getAllPaymentMethods,
   addPaymentMethod,
+  deletePaymentMethod
 };
