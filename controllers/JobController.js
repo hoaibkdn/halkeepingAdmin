@@ -65,10 +65,32 @@ const addCustomerPhoneNumber = async function (customerInfo) {
     const customerRes = await db.get().collection("customer").findOne({
       phone: customerInfo.phone,
     });
+
     if (!customerRes) {
-      await db.get().collection("customer").insertOne(customerInfo);
+      const newCustomer = await db
+        .get()
+        .collection("customer")
+        .insertOne(customerInfo);
+      return null;
     }
-    return customerRes;
+    // if exesting -> edit
+    await db
+      .get()
+      .collection("customer")
+      .updateOne(
+        {
+          phone: customerInfo.phone,
+        },
+        {
+          $set: {
+            name: customerInfo.name,
+            phone: customerInfo.phone,
+            email: customerInfo.email,
+            address: customerInfo.address,
+          },
+        }
+      );
+    return customerInfo;
   } catch (error) {
     return null;
   }
@@ -101,6 +123,13 @@ const createNewJob = async function (req, res, next) {
       address: req.body.address,
     })
   );
+  if (!insertedCustomer) {
+    res.send({
+      error: 1,
+      message: "Created job failed",
+    });
+    return;
+  }
   const cleaningTool = req.body.cleaningTool;
   const [priceInfo, paymentMethod, cleaningToolFee] = await getBasicFeeDb();
   const total = calculateTotalFee(
@@ -187,9 +216,6 @@ const editJob = async function (req, res) {
       { upsert: true }
     );
   if (result.matchedCount === 1) {
-    console.log({
-      result,
-    });
     res.send({
       data: {
         error: 0,
