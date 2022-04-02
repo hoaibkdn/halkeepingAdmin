@@ -14,6 +14,19 @@ const paymentSchema = new Schema(
       type: String,
       required: false,
     },
+    // display the card info
+    /**
+     * {
+     *    name: ABC,
+     *    cardNumber: '',
+     *    accountNumber: '',
+     *    bankName: ""
+     * }
+     */
+    info: {
+      type: String,
+      required: false,
+    },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },
