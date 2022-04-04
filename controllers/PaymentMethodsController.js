@@ -29,7 +29,7 @@ async function getAllPaymentMethods(req, res) {
 }
 
 async function addPaymentMethod(req, res) {
-  const id = req.body.id ? new ObjectId(req.body.id) : undefined;
+  const id = req.body._id ? new ObjectId(req.body._id) : undefined;
   try {
     if (id) {
       const result = await db.get().collection("payment_method").updateOne(
