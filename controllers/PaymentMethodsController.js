@@ -1,6 +1,5 @@
 const Payment = require("./../models/PaymentMethod");
 const db = require("./../db");
-const puppeteer = require("puppeteer");
 var ObjectId = require("mongodb").ObjectID;
 
 async function getPaymentMethodsFromDb() {
@@ -30,6 +29,8 @@ async function getAllPaymentMethods(req, res) {
 
 async function addPaymentMethod(req, res) {
   const id = req.body._id ? new ObjectId(req.body._id) : undefined;
+  const updateContent = { ...req.body };
+  delete updateContent._id;
   try {
     if (id) {
       const result = await db.get().collection("payment_method").updateOne(
@@ -37,7 +38,7 @@ async function addPaymentMethod(req, res) {
           _id: id,
         },
         {
-          $set: req.body,
+          $set: updateContent,
         }
       );
       if (result.matchedCount === 1 || result.upsertedCount === 1) {
@@ -47,6 +48,10 @@ async function addPaymentMethod(req, res) {
         });
         return;
       }
+      res.send({
+        error: 1,
+        message: "Payment method does not match",
+      });
     } else {
       const result = await db
         .get()
@@ -70,9 +75,6 @@ async function addPaymentMethod(req, res) {
       });
     }
   } catch (e) {
-    console.log({
-      error: e,
-    });
     res.send({
       error: e,
       message: "There is an error occur",
@@ -87,7 +89,7 @@ async function deletePaymentMethod(req, res) {
     await db
       .get()
       .collection("payment_method")
-      .deleteOne({ _id: ObjectId(paymentId) }, true);
+      .deleteOne({ _id: new ObjectId(paymentId) }, true);
     res.send({
       data: {
         error: 0,
