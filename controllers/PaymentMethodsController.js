@@ -51,16 +51,30 @@ async function addPaymentMethod(req, res) {
       const result = await db
         .get()
         .collection("payment_method")
-        .insertOne(method);
+        .insertOne(req.body);
+
+      if (result.insertedCount) {
+        res.send({
+          error: 0,
+          message: "Add successfully",
+          data: {
+            ...req.body,
+            _id: result.insertedId,
+          },
+        });
+        return;
+      }
       res.send({
-        error: 0,
-        message: "Add successfully",
+        error: 1,
+        message: "Add payment method failed",
       });
-      return;
     }
   } catch (e) {
+    console.log({
+      error: e,
+    });
     res.send({
-      error: 1,
+      error: e,
       message: "There is an error occur",
     });
   }
@@ -93,5 +107,5 @@ async function deletePaymentMethod(req, res) {
 module.exports = {
   getAllPaymentMethods,
   addPaymentMethod,
-  deletePaymentMethod
+  deletePaymentMethod,
 };
