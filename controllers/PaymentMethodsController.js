@@ -29,7 +29,7 @@ async function getAllPaymentMethods(req, res) {
 
 async function addPaymentMethod(req, res) {
   const id = req.body._id ? new ObjectId(req.body._id) : undefined;
-  const updateContent = { ...req.body };
+  const updateContent = { ...req.body, method: req.body.name };
   delete updateContent._id;
   try {
     if (id) {
