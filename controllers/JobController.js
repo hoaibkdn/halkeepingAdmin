@@ -182,7 +182,6 @@ const createNewJob = async function (req, res, next) {
 
 const editJob = async function (req, res) {
   const editedData = new Job({ ...req.body });
-  delete editedData._id;
   if (editedData.customerId && req.body.customerId) {
     editedData.customerId = new ObjectId(req.body.customerId);
   }
@@ -197,7 +196,7 @@ const editJob = async function (req, res) {
     from_two_hour: Number(editedData.pricePerHour),
   };
 
-  const cleaningToolFee = JSON.parse(editedData.cleaningToolFee);
+  const cleaningToolFee = editedData.cleaningToolFee;
   const basicInfo = {
     durationTime: Number(editedData.durationTime),
     cleaningTool: editedData.cleaningTool,
