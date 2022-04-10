@@ -65,13 +65,18 @@ const addCustomerPhoneNumber = async function (customerInfo) {
     const customerRes = await db.get().collection("customer").findOne({
       phone: customerInfo.phone,
     });
-
     if (!customerRes) {
       const newCustomer = await db
         .get()
         .collection("customer")
         .insertOne(customerInfo);
-      return null;
+
+      return newCustomer.insertedCount === 1
+        ? {
+            ...customerInfo,
+            _id: new ObjectId(newCustomer.insertedId),
+          }
+        : null;
     }
     // if exesting -> edit
     await db
@@ -90,7 +95,7 @@ const addCustomerPhoneNumber = async function (customerInfo) {
           },
         }
       );
-    return customerInfo;
+    return { ...customerInfo, _id: new ObjectId(customerRes._id) };
   } catch (error) {
     return null;
   }
@@ -115,14 +120,12 @@ const addCustomerPhoneNumber = async function (customerInfo) {
   }
 */
 const createNewJob = async function (req, res, next) {
-  const insertedCustomer = await addCustomerPhoneNumber(
-    new Customer({
-      name: req.body.name,
-      phone: req.body.phone,
-      email: req.body.email,
-      address: req.body.address,
-    })
-  );
+  const insertedCustomer = await addCustomerPhoneNumber({
+    name: req.body.name,
+    phone: req.body.phone,
+    email: req.body.email,
+    address: req.body.address,
+  });
   if (!insertedCustomer) {
     res.send({
       error: 1,
@@ -178,7 +181,8 @@ const createNewJob = async function (req, res, next) {
 };
 
 const editJob = async function (req, res) {
-  const editedData = { ...req.body, updatedAt: Date.now() };
+  const editedData = new Job({ ...req.body });
+  delete editedData._id;
   if (editedData.customerId && req.body.customerId) {
     editedData.customerId = new ObjectId(req.body.customerId);
   }
@@ -203,6 +207,11 @@ const editJob = async function (req, res) {
   };
   const totalPrice = calculateTotalFee(basicInfo, priceInfo, cleaningToolFee);
 
+  const dataUpdate = {
+    ...editedData._doc,
+    total: totalPrice,
+  };
+  delete dataUpdate._id;
   const result = await db
     .get()
     .collection("job")
@@ -211,7 +220,7 @@ const editJob = async function (req, res) {
         _id: new ObjectId(req.params.jobId),
       },
       {
-        $set: { ...editedData, total: totalPrice },
+        $set: dataUpdate,
       },
       { upsert: true }
     );
@@ -220,7 +229,7 @@ const editJob = async function (req, res) {
       data: {
         error: 0,
         message: "Updated successfully",
-        data: { ...editedData, total: totalPrice },
+        data: { ...dataUpdate, _id: req.params.jobId },
       },
     });
     return;
