@@ -17,6 +17,8 @@ const categoryRoute = require("./routes/category");
 const blogRoute = require("./routes/blog");
 const provinceRoute = require("./routes/province");
 const paymentMethodsRoute = require("./routes/paymentMethod");
+const cleaningToolRoute = require("./routes/cleaningTool");
+const workingHourRoute = require("./routes/workingHour");
 const utils = require("./utils");
 const db = require("./db");
 
@@ -78,5 +80,7 @@ db.connect(() => {
     app.use("/api/blog", blogRoute);
     app.use("/api/provinces", provinceRoute);
     app.use("/api/paymentmethods", paymentMethodsRoute);
+    app.use("/api/cleaning-tool", cleaningToolRoute);
+    app.use("/api/working-hour", workingHourRoute);
   });
 });
