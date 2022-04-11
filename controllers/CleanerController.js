@@ -112,7 +112,7 @@ function getCleanerById(req, res) {
     );
 }
 
-const editCleaner = function (req, res) {
+const editCleaner = async function (req, res) {
   if (!req.body.name) {
     res.send({
       data: {
@@ -123,38 +123,38 @@ const editCleaner = function (req, res) {
     return;
   }
   const editedData = new Cleaner({ ...req.body });
-    const result = await db
-      .get()
-      .collection("customer")
-      .updateOne(
-        {
-          _id: new ObjectId(req.params.id),
-        },
-        {
-          $set: editedData,
-        },
-        { upsert: true }
-      );
+  const result = await db
+    .get()
+    .collection("customer")
+    .updateOne(
+      {
+        _id: new ObjectId(req.params.id),
+      },
+      {
+        $set: editedData,
+      },
+      { upsert: true }
+    );
 
-      if (result.matchedCount === 1) {
-        res.send({
-          data: {
-            error: 0,
-            message: "Updated successfully",
-            data: { ...editedData, _id: req.params.id },
-          },
-        });
-        return;
-      }
+  if (result.matchedCount === 1) {
     res.send({
-      error: 1,
-      message: error.message,
+      data: {
+        error: 0,
+        message: "Updated successfully",
+        data: { ...editedData, _id: req.params.id },
+      },
     });
+    return;
+  }
+  res.send({
+    error: 1,
+    message: error.message,
+  });
 };
 
 module.exports = {
   addCleaner,
   getCleaners,
   getCleanerById,
-  editCleaner
+  editCleaner,
 };
