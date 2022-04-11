@@ -1,4 +1,5 @@
 const Cleaner = require("./../models/Cleaner");
+var ObjectId = require("mongodb").ObjectID;
 const db = require("./../db");
 
 const addCleaner = function (req, res, next) {
@@ -91,12 +92,12 @@ function getCleanerById(req, res) {
       {
         _id: id,
       },
-      function (err, blog) {
+      function (err, cleaner) {
         if (err) {
           res.send({
             data: {
               error: 1,
-              message: "Get the blog error",
+              message: "Get cleaner error",
             },
           });
           return;
@@ -104,8 +105,8 @@ function getCleanerById(req, res) {
         return res.send({
           data: {
             error: 0,
-            message: "Get blog successfully",
-            blog,
+            message: "Get cleaner successfully",
+            cleaner,
           },
         });
       }
@@ -125,7 +126,7 @@ const editCleaner = async function (req, res) {
   const editedData = new Cleaner({ ...req.body });
   const result = await db
     .get()
-    .collection("customer")
+    .collection("cleaner")
     .updateOne(
       {
         _id: new ObjectId(req.params.id),

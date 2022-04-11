@@ -91,12 +91,12 @@ function getCustomerById(req, res) {
       {
         _id: id,
       },
-      function (err, blog) {
+      function (err, customer) {
         if (err) {
           res.send({
             data: {
               error: 1,
-              message: "Get the blog error",
+              message: "Get customer error",
             },
           });
           return;
@@ -104,8 +104,8 @@ function getCustomerById(req, res) {
         return res.send({
           data: {
             error: 0,
-            message: "Get blog successfully",
-            blog,
+            message: "Get customer successfully",
+            customer,
           },
         });
       }

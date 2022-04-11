@@ -4,6 +4,7 @@ const db = require("./../db");
 const puppeteer = require("puppeteer");
 var ObjectId = require("mongodb").ObjectID;
 const { getRangeWorkingTime } = require("./../utils");
+const { getCleaningTools } = require("./CleaningToolController");
 const { MANAGER_WORKING_TIME, CLEANER_WORKING_TIME } = require("./../constant");
 
 const getAllJobs = async function (req, res) {
@@ -270,10 +271,7 @@ async function getBasicFeeDb() {
       .find()
       .toArray();
     paymentMethod = paymentMethodDb.length ? paymentMethodDb : paymentMethod;
-    const cleaningToolsFeeDb = await db
-      .get()
-      .collection("price_cleaning_tool")
-      .findOne();
+    const cleaningToolsFeeDb = await getCleaningTools();
     cleaningToolFee = {
       ...cleaningToolsFeeDb,
       basic: Number(cleaningToolsFeeDb.basic),
