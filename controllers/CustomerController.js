@@ -73,6 +73,45 @@ const addCustomer = function (req, res, next) {
   }
 };
 
+function getCustomerById(req, res) {
+  const id = new ObjectId(req.params.id);
+  if (!id) {
+    res.send({
+      data: {
+        error: 1,
+        message: "Please provide id",
+      },
+    });
+    return;
+  }
+
+  db.get()
+    .collection("customer")
+    .findOne(
+      {
+        _id: id,
+      },
+      function (err, blog) {
+        if (err) {
+          res.send({
+            data: {
+              error: 1,
+              message: "Get the blog error",
+            },
+          });
+          return;
+        }
+        return res.send({
+          data: {
+            error: 0,
+            message: "Get blog successfully",
+            blog,
+          },
+        });
+      }
+    );
+}
+
 module.exports = {
   addCustomer,
   getAllCustomers,

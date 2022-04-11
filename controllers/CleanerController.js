@@ -73,7 +73,88 @@ function getCleaners(req, res) {
   }
 }
 
+function getCleanerById(req, res) {
+  const id = new ObjectId(req.params.id);
+  if (!id) {
+    res.send({
+      data: {
+        error: 1,
+        message: "Please provide id",
+      },
+    });
+    return;
+  }
+
+  db.get()
+    .collection("cleaner")
+    .findOne(
+      {
+        _id: id,
+      },
+      function (err, blog) {
+        if (err) {
+          res.send({
+            data: {
+              error: 1,
+              message: "Get the blog error",
+            },
+          });
+          return;
+        }
+        return res.send({
+          data: {
+            error: 0,
+            message: "Get blog successfully",
+            blog,
+          },
+        });
+      }
+    );
+}
+
+const editCleaner = function (req, res) {
+  if (!req.body.name) {
+    res.send({
+      data: {
+        error: 1,
+        message: "Data is not empty",
+      },
+    });
+    return;
+  }
+  const editedData = new Cleaner({ ...req.body });
+    const result = await db
+      .get()
+      .collection("customer")
+      .updateOne(
+        {
+          _id: new ObjectId(req.params.id),
+        },
+        {
+          $set: editedData,
+        },
+        { upsert: true }
+      );
+
+      if (result.matchedCount === 1) {
+        res.send({
+          data: {
+            error: 0,
+            message: "Updated successfully",
+            data: { ...editedData, _id: req.params.id },
+          },
+        });
+        return;
+      }
+    res.send({
+      error: 1,
+      message: error.message,
+    });
+};
+
 module.exports = {
   addCleaner,
   getCleaners,
+  getCleanerById,
+  editCleaner
 };
