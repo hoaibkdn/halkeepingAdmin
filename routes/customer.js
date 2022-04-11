@@ -9,4 +9,6 @@ router.post("/add-customer", CustomerController.addCustomer);
 
 router.get("/get", CustomerController.getAllCustomers);
 
+router.get('/detail/id', CleanerController.getCustomerById )
+
 module.exports = router;

@@ -115,4 +115,5 @@ function getCustomerById(req, res) {
 module.exports = {
   addCustomer,
   getAllCustomers,
+  getCustomerById,
 };
