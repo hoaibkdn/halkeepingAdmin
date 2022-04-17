@@ -3,7 +3,9 @@ var ObjectId = require("mongodb").ObjectID;
 const db = require("./../db");
 
 const addCleaner = function (req, res, next) {
-  if (!req.body.name) {
+  const isInvalidCleaner =
+    !req.body.name || !req.body.phone || !req.body.address;
+  if (isInvalidCleaner) {
     res.send({
       data: {
         error: 1,
@@ -17,11 +19,12 @@ const addCleaner = function (req, res, next) {
     db.get()
       .collection("cleaner")
       .insertOne(cleaner)
-      .then(() => {
+      .then((cleanerData) => {
         res.send({
           data: {
             error: 0,
             message: "Added cleaner successfully",
+            cleaner: cleanerData.ops[0],
           },
         });
       });
@@ -114,7 +117,10 @@ function getCleanerById(req, res) {
 }
 
 const editCleaner = async function (req, res) {
-  if (!req.body.name) {
+  const isInvalidCleaner =
+    !req.body.name || !req.body.phone || !req.body.address;
+  const cleanerId = req.params.id ? new ObjectId(req.params.id) : null;
+  if (isInvalidCleaner || !cleanerId) {
     res.send({
       data: {
         error: 1,
@@ -124,25 +130,27 @@ const editCleaner = async function (req, res) {
     return;
   }
   const editedData = new Cleaner({ ...req.body });
-  const result = await db
-    .get()
-    .collection("cleaner")
-    .updateOne(
-      {
-        _id: new ObjectId(req.params.id),
-      },
-      {
-        $set: editedData,
-      },
-      { upsert: true }
-    );
-
+  const insertedDat = {
+    name: req.body.name,
+    phone: req.body.phone,
+    address: req.body.address,
+    updatedAt: editedData.updatedAt,
+  };
+  const result = await db.get().collection("cleaner").updateOne(
+    {
+      _id: cleanerId,
+    },
+    {
+      $set: insertedDat,
+    },
+    { upsert: true }
+  );
   if (result.matchedCount === 1) {
     res.send({
       data: {
         error: 0,
         message: "Updated successfully",
-        data: { ...editedData, _id: req.params.id },
+        data: { ...insertedDat, _id: cleanerId },
       },
     });
     return;
