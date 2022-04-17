@@ -1,6 +1,4 @@
 const Customer = require("./../models/Cleaner");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const db = require("./../db");
 var ObjectId = require("mongodb").ObjectID;
 
@@ -49,29 +47,76 @@ const getAllCustomers = async function (req, res) {
     });
 };
 
-const addCustomer = function (req, res, next) {
-  const customer = new Customer(req.body);
-  console.log("customer ===> ", customer);
-  try {
-    db.get()
+async function addOrEditCustomer(req, res) {
+  const customerId = req.params.customerId
+    ? new ObjectId(req.params.customerId)
+    : null;
+  const customerRes = await db.get().collection("customer").findOne({
+    _id: customerId,
+  });
+  const customerInfo = {
+    name: req.body.name,
+    phone: req.body.phone,
+    email: req.body.email,
+    address: req.body.address,
+  };
+  if (!customerRes) {
+    const newCustomer = await db
+      .get()
       .collection("customer")
-      .insertOne(customer)
-      .then(() => {
-        res.send({
-          data: {
-            error: 0,
-            message: "Added customer successfully",
-          },
-        });
-      });
-  } catch (error) {
+      .insertOne(customerInfo);
+
+    const fullNewData =
+      newCustomer.insertedCount === 1
+        ? {
+            ...customerInfo,
+            _id: new ObjectId(newCustomer.insertedId),
+          }
+        : null;
     res.send({
-      error: 1,
-      message: error.message,
+      error: Boolean(newCustomer.insertedCount !== 1),
+      customer: fullNewData,
+      message:
+        newCustomer.insertedCount === 1
+          ? "Added customer successfully"
+          : "Added customer failed",
     });
-    console.log(error);
+    return;
   }
-};
+  // if exesting -> edit
+  const dataUpdate = new Customer({
+    ...customerInfo,
+    createdAt: req.body.createdAt,
+  });
+  const updatedCus = await db
+    .get()
+    .collection("customer")
+    .updateOne(
+      {
+        _id: customerId,
+      },
+      {
+        $set: {
+          ...customerInfo,
+          createdAt: req.body.createdAt,
+          updatedAt: dataUpdate.updatedAt,
+        },
+      }
+    );
+  const fullUpdatedData = {
+    ...dataUpdate._doc,
+    _id: new ObjectId(customerRes._id),
+  };
+
+  res.send({
+    error: Boolean(updatedCus.matchedCount !== 1),
+    customer: fullUpdatedData,
+    message:
+      updatedCus.matchedCount === 1
+        ? "Updated customer successfully"
+        : "Updated customer failed",
+  });
+}
 
 function getCustomerById(req, res) {
   const id = new ObjectId(req.params.id);
@@ -113,7 +158,7 @@ function getCustomerById(req, res) {
 }
 
 module.exports = {
-  addCustomer,
+  addOrEditCustomer,
   getAllCustomers,
   getCustomerById,
 };
