@@ -63,40 +63,40 @@ const getAllJobs = async function (req, res) {
 // find existing phone number
 const addCustomerPhoneNumber = async function (customerInfo) {
   try {
-    const customerRes = await db.get().collection("customer").findOne({
-      phone: customerInfo.phone,
-    });
-    if (!customerRes) {
-      const newCustomer = await db
-        .get()
-        .collection("customer")
-        .insertOne(customerInfo);
-
-      return newCustomer.insertedCount === 1
-        ? {
-            ...customerInfo,
-            _id: new ObjectId(newCustomer.insertedId),
-          }
-        : null;
-    }
-    // if exesting -> edit
-    await db
+    // const customerRes = await db.get().collection("customer").findOne({
+    //   phone: customerInfo.phone,
+    // });
+    // if (!customerRes) {
+    const newCustomer = await db
       .get()
       .collection("customer")
-      .updateOne(
-        {
-          phone: customerInfo.phone,
-        },
-        {
-          $set: {
-            name: customerInfo.name,
-            phone: customerInfo.phone,
-            email: customerInfo.email,
-            address: customerInfo.address,
-          },
+      .insertOne(customerInfo);
+
+    return newCustomer.insertedCount === 1
+      ? {
+          ...customerInfo,
+          _id: new ObjectId(newCustomer.insertedId),
         }
-      );
-    return { ...customerInfo, _id: new ObjectId(customerRes._id) };
+      : null;
+    // }
+    // if exesting -> edit
+    // await db
+    //   .get()
+    //   .collection("customer")
+    //   .updateOne(
+    //     {
+    //       phone: customerInfo.phone,
+    //     },
+    //     {
+    //       $set: {
+    //         name: customerInfo.name,
+    //         phone: customerInfo.phone,
+    //         email: customerInfo.email,
+    //         address: customerInfo.address,
+    //       },
+    //     }
+    //   );
+    // return { ...customerInfo, _id: new ObjectId(customerRes._id) };
   } catch (error) {
     return null;
   }
@@ -152,6 +152,7 @@ const createNewJob = async function (req, res, next) {
     customerId: insertedCustomer._id,
     total,
     cleaningToolFee: JSON.stringify(cleaningToolFee),
+    customerNote: req.body.note,
   });
 
   try {
@@ -197,7 +198,13 @@ const editJob = async function (req, res) {
     from_two_hour: Number(editedData.pricePerHour),
   };
 
-  const cleaningToolFee = editedData.cleaningToolFee;
+  const cleaningToolFee =
+    typeof editedData.cleaningToolFee === "string"
+      ? JSON.parse(editedData.cleaningToolFee)
+      : {
+          basic: 30000,
+          vacuum: 30000,
+        };
   const basicInfo = {
     durationTime: Number(editedData.durationTime),
     cleaningTool: editedData.cleaningTool,
