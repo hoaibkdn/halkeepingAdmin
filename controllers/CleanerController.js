@@ -134,6 +134,10 @@ const editCleaner = async function (req, res) {
     name: req.body.name,
     phone: req.body.phone,
     address: req.body.address,
+    facebook: req.body.facebook,
+    zalo: req.body.zalo,
+    isActive: req.body.isActive,
+    extra_info: req.body.extraInfo,
     updatedAt: editedData.updatedAt,
   };
   const result = await db.get().collection("cleaner").updateOne(
