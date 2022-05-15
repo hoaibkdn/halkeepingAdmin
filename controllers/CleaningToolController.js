@@ -35,7 +35,45 @@ async function requestCleaningToolServer(req, res) {
   });
 }
 
+async function editCleaningToolPrice(req, res) {
+  const cleaningToolId = new ObjectId(req.params.id);
+  const insertedData = {
+    ...req.body,
+  };
+  try {
+    const result = await db.get().collection("price_cleaning_tool").updateOne(
+      {
+        _id: cleaningToolId,
+      },
+      {
+        $set: insertedData,
+      },
+      { upsert: true }
+    );
+    if (result.matchedCount === 1) {
+      res.send({
+        data: {
+          error: 0,
+          message: "Updated successfully",
+          data: { ...insertedData, _id: cleaningToolId },
+        },
+      });
+      return;
+    }
+    res.send({
+      error: 1,
+      message: "Id is not correct",
+    });
+  } catch (error) {
+    res.send({
+      error: 1,
+      message: error.message,
+    });
+  }
+}
+
 module.exports = {
   getCleaningTools,
   requestCleaningToolServer,
+  editCleaningToolPrice,
 };

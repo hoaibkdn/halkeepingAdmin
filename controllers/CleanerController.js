@@ -140,29 +140,32 @@ const editCleaner = async function (req, res) {
     extra_info: req.body.extraInfo,
     updatedAt: editedData.updatedAt,
   };
-  const result = await db.get().collection("cleaner").updateOne(
-    {
-      _id: cleanerId,
-    },
-    {
-      $set: insertedDat,
-    },
-    { upsert: true }
-  );
-  if (result.matchedCount === 1) {
-    res.send({
-      data: {
-        error: 0,
-        message: "Updated successfully",
-        data: { ...insertedDat, _id: cleanerId },
+  try {
+    const result = await db.get().collection("cleaner").updateOne(
+      {
+        _id: cleanerId,
       },
+      {
+        $set: insertedDat,
+      },
+      { upsert: true }
+    );
+    if (result.matchedCount === 1) {
+      res.send({
+        data: {
+          error: 0,
+          message: "Updated successfully",
+          data: { ...insertedDat, _id: cleanerId },
+        },
+      });
+      return;
+    }
+  } catch (error) {
+    res.send({
+      error: 1,
+      message: error.message,
     });
-    return;
   }
-  res.send({
-    error: 1,
-    message: error.message,
-  });
 };
 
 module.exports = {
