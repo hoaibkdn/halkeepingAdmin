@@ -556,6 +556,7 @@ const initBasicJobInfo = async function (req, res) {
 
 function getJobDetail(req, res) {
   const jobId = new ObjectId(req.params.jobId || 0);
+  let cleaner = [];
   db.get()
     .collection("job")
     .aggregate([
@@ -583,11 +584,18 @@ function getJobDetail(req, res) {
     .toArray()
     .then((jobs) => {
       if (jobs) {
+        cleaner = jobs.length
+          ? jobs[0].cleaner.map((cleanerInfo) => ({
+              ...cleanerInfo,
+              startTime: cleanerInfo.startTime || null,
+              endTime: cleanerInfo.endTime || null,
+            }))
+          : [];
         res.send({
           data: {
             error: 0,
             message: "Get job successfully",
-            job: jobs.length ? jobs[0] : null,
+            job: jobs.length ? { ...jobs[0], cleaners } : null,
           },
         });
         return;
