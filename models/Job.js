@@ -14,6 +14,10 @@ const jobSchema = new Schema(
       type: [ObjectId],
       required: false,
     },
+    cleaner: {
+      type: Array,
+      required: false,
+    },
     preferDate: {
       type: Date, // should be correct both date and time
       required: false,

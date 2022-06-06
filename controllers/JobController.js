@@ -190,6 +190,11 @@ const editJob = async function (req, res) {
   if (req.body.cleanerId) {
     const cleanerId = req.body.cleanerId;
     editedData.cleanerId = cleanerId.map((id) => new ObjectId(id));
+    editedData.cleaner = cleanerId.map((id) => ({
+      _id: new ObjectId(id),
+      startTime: null,
+      endTime: null,
+    }));
   }
 
   // re-calculate the total price
@@ -595,7 +600,7 @@ function getJobDetail(req, res) {
           data: {
             error: 0,
             message: "Get job successfully",
-            job: jobs.length ? { ...jobs[0], cleaners } : null,
+            job: jobs.length ? { ...jobs[0], cleaner } : null,
           },
         });
         return;
