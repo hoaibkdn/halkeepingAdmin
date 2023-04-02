@@ -88,6 +88,10 @@ const jobSchema = new Schema(
     total: {
       type: Number,
     },
+    isDone: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: { createdAt: true, updatedAt: true } }
 );

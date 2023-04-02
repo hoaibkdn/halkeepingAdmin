@@ -554,7 +554,7 @@ const initBasicJobInfo = async function (req, res) {
   } catch (error) {
     res.send({
       error: 1,
-      message: "Cannot insert",
+      message: "Cannot insert this Job",
     });
   }
 };
