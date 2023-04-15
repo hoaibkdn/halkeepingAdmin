@@ -436,12 +436,14 @@ function getValidWorkingTime(timeStamp, timeZone) {
 */
 const getBasicJobInfo = async function (req, res) {
   // calculate valid workingtime
-  const clienTimeZone = req.body.requestedTime?.timeZone
-    ? Number(req.body.requestedTime?.timeZone)
-    : null;
-  const sendingTimeStamp = req.body.requestedTime?.timeStamp
-    ? Number(req.body.requestedTime?.timeStamp)
-    : null;
+  const clienTimeZone =
+    req.body.requestedTime && req.body.requestedTime.timeZone
+      ? Number(req.body.requestedTime.timeZone)
+      : null;
+  const sendingTimeStamp =
+    req.body.requestedTime && req.body.requestedTime.timeStamp
+      ? Number(req.body.requestedTime.timeStamp)
+      : null;
 
   const validWorkingTime = getValidWorkingTime(sendingTimeStamp, clienTimeZone);
 
