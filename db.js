@@ -30,9 +30,6 @@ async function connect(callback) {
   } catch (err) {
     console.log(err.stack);
   }
-  //   finally {
-  //     await client.close();
-  //   }
 }
 function get() {
   return mongodb;
