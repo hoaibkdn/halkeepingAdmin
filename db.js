@@ -15,7 +15,6 @@ let mongodb;
 async function connect(callback) {
   //   mongoClient.connect(mongoDbUrl, (err, db) => {
   //     mongodb = db;
-  //     console.log("mongodb ===> ", mongodb);
   //   });
   try {
     const connected = await client.connect();
