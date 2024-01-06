@@ -16,3 +16,13 @@ https://halkeeping.onrender.com
 
 #### Test api (can test on postman)
 - login: POST https://halkeeping.onrender.com/api/login
+
+### Hoai
+- Authen
+- API request
+- fix cron job
+- Migrate db
+
+
+### Hue
+- api doc
