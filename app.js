@@ -7,6 +7,8 @@ const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 const bodyParser = require("body-parser");
+const cron = require("cron");
+const https = require("https");
 const authRoute = require("./routes/auth");
 const cleanerRoute = require("./routes/cleaner");
 const customerRoute = require("./routes/customer");
@@ -21,6 +23,31 @@ const cleaningToolRoute = require("./routes/cleaningTool");
 const workingHourRoute = require("./routes/workingHour");
 const utils = require("./utils");
 const db = require("./db");
+
+function cronjob() {
+  const backendUrl = "https://halkeeping.onrender.com";
+  const job = new cron.CronJob(
+    "*/14 * * * *",
+    function () {
+      https
+        .get(backendUrl, (res) => {
+          if (res.statusCode === 200) {
+            console.log("Server restarted");
+          } else {
+            console.log("failed to restart ", res.statusCode);
+          }
+        })
+
+        .on("error", (err) => {
+          console.error("Error during Restart ", err.message);
+        });
+    },
+    null,
+    true
+  );
+}
+
+cronjob();
 
 app.use(bodyParser.json());
 
