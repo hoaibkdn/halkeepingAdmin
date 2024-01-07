@@ -1,3 +1,8 @@
+### How to generate apidoc
+
+- npm run apidoc
+- open index.html in public/apidoc folder
+
 ### How to run 
 ```bash
     npm install
