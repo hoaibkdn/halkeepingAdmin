@@ -1,16 +1,25 @@
 /** @format */
 
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const cors = require("cors");
-const db = require("./../db");
-const AuthController = require("./../controllers/AuthController");
-const ImageController = require("./../controllers/ImageController");
-router.post("/register", AuthController.register);
-router.get("/users", (req, res) => {
-  console.log("req with token ", req.user);
+const cors = require('cors');
+const db = require('./../db');
+const AuthController = require('./../controllers/AuthController');
+const ImageController = require('./../controllers/ImageController');
+router.post('/register', AuthController.register);
+
+/**
+ * @api {get} /users Request list User information
+ * @apiName GetUser
+ * @apiGroup User
+ *
+ *
+ * @apiSuccess {User} users list of user.
+ */
+router.get('/users', (req, res) => {
+  console.log('req with token ', req.user);
   db.get()
-    .collection("users")
+    .collection('users')
     .find({})
     .toArray()
     .then((items) => {
@@ -20,10 +29,10 @@ router.get("/users", (req, res) => {
     })
     .catch((err) => console.error(`Failed to find documents: ${err}`));
 });
-router.post("/login", cors(), AuthController.login);
-router.patch("/user/:userId", cors(), AuthController.updateUser);
+router.post('/login', cors(), AuthController.login);
+router.patch('/user/:userId', cors(), AuthController.updateUser);
 
-router.post("/upload", ImageController.uploadFile);
-router.get("/get-images", ImageController.getImages);
+router.post('/upload', ImageController.uploadFile);
+router.get('/get-images', ImageController.getImages);
 
 module.exports = router;
