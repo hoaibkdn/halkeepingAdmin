@@ -9,6 +9,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
+    "moment": "^2.30.1",
     "mongodb": "^3.6.3",
     "mongoose": "^5.11.15",
     "multiparty": "^4.2.2",
@@ -25,12 +26,19 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon app.js",
-    "apidoc": "apidoc -i routes/ -o public/apidoc"
+    "apidoc": "apidoc -i routes/ -o public/apidoc",
+    "dev": "node ./build/server.js",
+    "start_v2": "tsc && npm run dev"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.11.5",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
     "apidoc": "^1.2.0",
     "chai": "^4.3.0",
@@ -39,10 +47,7 @@
     "mocha": "^8.3.0",
     "mochawesome": "^6.2.2",
     "prettier": "^3.1.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
-  },
-  "engines": {
-    "node": "16.x",
-    "npm": "8.x"
   }
 }
