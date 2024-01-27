@@ -1,15 +1,15 @@
 import * as bodyParser from 'body-parser';
-import express from "express";
-import Routes from './routers';
+import express from 'express';
 import errorMiddleware from './middleware/error.middleware';
-import cors, { CorsOptions } from "cors";
+import cors, { CorsOptions } from 'cors';
+import router from './routers';
 
 class App {
   public app: express.Application;
 
   constructor() {
     const corsOptions: CorsOptions = {
-      origin: "http://localhost:3000"
+      origin: 'http://localhost:3000',
     };
     this.app = express();
     this.app.use(cors(corsOptions));
@@ -37,7 +37,7 @@ class App {
   }
 
   private initRouters() {
-    new Routes(this.app, "/api/v2");
+    this.app.use('/api/v2', router);
   }
 }
 

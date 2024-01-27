@@ -24,11 +24,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "prepare": "husky install",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon app.js",
     "apidoc": "apidoc -i routes/ -o public/apidoc",
-    "dev": "node ./build/server.js",
-    "start_v2": "tsc && npm run dev"
+    "build": "tsc",
+    "start_v2": "tsc && nodemon ./build/server.js"
   },
   "author": "",
   "license": "ISC",

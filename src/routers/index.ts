@@ -1,10 +1,11 @@
-import { Application } from "express";
-import AuthRoutes from "./auth.routes";
-import UserRoutes from "./user.routes";
+import { Router } from 'express';
+import { login } from '../controllers/auth.controllers';
+import { getListUser } from '../controllers/user.controlers';
 
-export default class Routes {
-  constructor(app: Application, path: string) {
-    app.use(path, AuthRoutes);
-    app.use(path, UserRoutes);
-  }
-}
+const router = Router();
+
+// Auth
+router.post('/login', login);
+router.get('/users', getListUser);
+
+export default router;
