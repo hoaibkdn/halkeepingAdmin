@@ -11,6 +11,14 @@
     npm start
 ```
 
+### How to run v2
+```bash
+    npm install
+```
+```bash
+    npm run start_v2
+```
+
 ### Demo
 #### Testing account
 + username: halstorm@gmail.com
