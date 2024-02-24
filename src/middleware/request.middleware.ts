@@ -16,7 +16,7 @@ interface HandlerOptions {
 export const requestHandler =
   (handler: RequestHandler, options?: HandlerOptions): RequestHandler =>
   async (req: Request, res: Response, next: NextFunction) => {
-    logger.info('==== Request Handler ===', req.headers);
+    logger.info('==== Request Handler ===', req.body);
     if (!options?.skipJwtAuth) {
       const token = req.headers['authorization'];
 
