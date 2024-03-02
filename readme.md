@@ -1,7 +1,7 @@
 ### How to generate apidoc
-
+- npm install -g http-server
 - npm run apidoc
-- open index.html in public/apidoc folder
+- http-server public/apidoc
 
 ### How to run 
 ```bash
