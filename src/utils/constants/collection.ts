@@ -3,4 +3,5 @@ export const enum Collection {
   JOB = 'job_v2',
   CONFIGURATION = 'configuration',
   JOB_TOOL = 'job_tool_v2',
+  TOOL = 'tool_v2',
 }

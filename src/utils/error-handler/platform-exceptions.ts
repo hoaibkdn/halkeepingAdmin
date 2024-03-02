@@ -12,7 +12,7 @@ class HttpException extends Error {
 
 class BadRequestException extends HttpException {
   constructor(message?: string) {
-    super(message || ErrorConstant.INVALID_REQUEST, 403);
+    super(message || ErrorConstant.INVALID_REQUEST, 400);
   }
 }
 

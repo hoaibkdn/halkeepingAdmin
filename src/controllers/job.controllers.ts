@@ -7,6 +7,7 @@ import { getInfoConfiguration } from '../services/configuration.service';
 import { addCustomerPhoneNumber } from '../services/customer.service';
 import { addJobTool } from '../services/jobTool.service';
 import { isNumber, validateEmail, validatePhoneNumber } from '../utils/validate';
+import { getListsToolService } from '../services/tool.service';
 
 export interface ToolJobRequest {
   toolId: string;
@@ -41,9 +42,15 @@ const createNewJobWrapper: RequestHandler = async (req, res, next: NextFunction)
     return next(new BadRequestException('Missing required field'));
   }
 
+  const tools = await getListsToolService();
+
   input.tools?.forEach((i) => {
     if (!i.toolId || !i.realPrice) {
       return next(new BadRequestException('Missing required field of tool request'));
+    }
+
+    if (!tools.find((k) => k._id == i.toolId)) {
+      return next(new BadRequestException('toolId is wrong'));
     }
   });
 
