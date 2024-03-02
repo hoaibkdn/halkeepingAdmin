@@ -1,4 +1,4 @@
-import { ErrorCodeConstant } from "../constants/error-constants";
+import { ErrorConstant } from '../constants/error-constants';
 
 class HttpException extends Error {
   public status: number;
@@ -12,39 +12,26 @@ class HttpException extends Error {
 
 class BadRequestException extends HttpException {
   constructor(message?: string) {
-    super(message || ErrorCodeConstant.INVALID_REQUEST,
-      403,
-    );
+    super(message || ErrorConstant.INVALID_REQUEST, 403);
   }
 }
 
 class ForbiddenException extends HttpException {
   constructor(message?: string) {
-    super(message || ErrorCodeConstant.FORBIDDEN,
-      403,
-    );
-  }
-}
-
-class NotFoundException extends HttpException {
-  constructor(message?: string) {
-    super(
-      message || ErrorCodeConstant.USER_NOT_FOUND,
-      404,
-    );
+    super(message || ErrorConstant.FORBIDDEN, 403);
   }
 }
 
 class UnauthorizedException extends HttpException {
   constructor(message?: string) {
-    super(message || 'Unauthorized', 401);
+    super(message || ErrorConstant.UNAUTHORIZED, 401);
   }
 }
 
-export {
-  HttpException,
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-  UnauthorizedException
-};
+class UnknowException extends HttpException {
+  constructor(message?: string) {
+    super(message || ErrorConstant.UNKNOWN_ERROR, 501);
+  }
+}
+
+export { HttpException, BadRequestException, ForbiddenException, UnauthorizedException, UnknowException };

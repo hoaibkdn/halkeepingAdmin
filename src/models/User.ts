@@ -1,7 +1,4 @@
-import {
-  Document, Model, Schema, model
-} from 'mongoose';
-// import { hashSync, genSaltSync } from 'bcrypt';
+import { Document, Model, Schema, model } from 'mongoose';
 
 export interface IUser extends Document {
   /** Email */
@@ -20,10 +17,9 @@ export interface IUser extends Document {
   createdAt: Date;
   /** updatedAt */
   updatedAt: Date;
-  encryptPassword: (password: string) => string;
 }
 
-interface IUserModel extends Model<IUser> { }
+interface IUserModel extends Model<IUser> {}
 
 const schema = new Schema({
   email: { type: String, required: true },
@@ -57,7 +53,6 @@ const schema = new Schema({
   },
 });
 
-schema.set("timestamps", true);
-// schema.methods.encryptPassword = (password: string) => hashSync(password, genSaltSync(10));
+schema.set('timestamps', true);
 
 export const User: IUserModel = model<IUser, IUserModel>('User', schema);
