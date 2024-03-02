@@ -1,11 +1,12 @@
 import { NextFunction, RequestHandler } from 'express';
 import { requestHandler } from '../middleware/request.middleware';
-import { UnknowException } from '../utils/error-handler/platform-exceptions';
+import { BadRequestException, UnknowException } from '../utils/error-handler/platform-exceptions';
 import { createNewJobDB } from '../services/job.service';
 import { METHOD } from '../models/payment';
 import { getInfoConfiguration } from '../services/configuration.service';
 import { addCustomerPhoneNumber } from '../services/customer.service';
 import { addJobTool } from '../services/jobTool.service';
+import { isNumber, validateEmail, validatePhoneNumber } from '../utils/validate';
 
 export interface ToolJobRequest {
   toolId: string;
@@ -26,6 +27,50 @@ export interface NewJobRequest {
 
 const createNewJobWrapper: RequestHandler = async (req, res, next: NextFunction) => {
   const input: NewJobRequest = req.body;
+
+  if (
+    !input.name ||
+    !input.phone ||
+    !input.email ||
+    !input.address ||
+    !input.workdate ||
+    !input.numberOfClean ||
+    !input.durationEachClean ||
+    !input.method
+  ) {
+    return next(new BadRequestException('Missing required field'));
+  }
+
+  input.tools?.forEach((i) => {
+    if (!i.toolId || !i.realPrice) {
+      return next(new BadRequestException('Missing required field of tool request'));
+    }
+  });
+
+  // Validate phone number
+  if (!validatePhoneNumber(input.phone)) {
+    return next(new BadRequestException('Invalid phone number format. Please provide a valid phone number.'));
+  }
+
+  // Validate email
+  if (!validateEmail(input.email)) {
+    return next(new BadRequestException('Invalid email format. Please provide a valid email.'));
+  }
+
+  // Validate method
+  if (input.method !== METHOD.CASH && input.method !== METHOD.CREDIT) {
+    return next(new BadRequestException('Invalid method format. Please provide a method'));
+  }
+
+  // Validate is number field
+  if (!isNumber(input.durationEachClean) || !isNumber(input.numberOfClean)) {
+    return next(new BadRequestException('Invalid durationEachClean or numberOfClean format'));
+  }
+
+  if (input.durationEachClean < 60) {
+    return next(new BadRequestException('Duration of each clean should than or equal one hour'));
+  }
+
   const customer = await addCustomerPhoneNumber({
     name: input.name,
     phone: input.phone,
