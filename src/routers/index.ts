@@ -3,6 +3,7 @@ import { login } from '../controllers/auth.controllers';
 import { getListUser } from '../controllers/user.controlers';
 import { createNewJob } from '../controllers/job.controllers';
 import { getProvinces } from './../controllers/province.controllers';
+import { getListTools } from '../controllers/tool.controllers';
 
 const router = Router();
 
@@ -37,7 +38,30 @@ router.get('/provinces', getProvinces);
  * @apiSuccess {Number} data.job.duration total time of job (unit is minute)
  * @apiSuccess {Number} data.job.total total money of job
  * @apiSuccess {Number} data.job.id Job's id
+ *
+ * @apiError {Object} Error message indicating the reason for failure.
+ * @apiErrorExample {json} Error-Response:
+ *     400 Bad Request
+ *     {
+ *        "message": "Missing required field",
+ *        "status": 400
+ *     }
  */
 router.post('/job/create', createNewJob);
+
+/**
+ * @api {get} /tool/all get list tools
+ * @apiName getListTools
+ * @apiGroup Tool
+ *
+ * @apiSuccess {Object} data
+ * @apiSuccess {Object[]} data.tools new job
+ * @apiSuccess {String} data.tools._id tool's id.
+ * @apiSuccess {String} data.tools.name tool's name.
+ * @apiSuccess {number} data.tools.defaultPrice tool's default price.
+ * @apiSuccess {Date} data.tools.createdAt tool's createdAt.
+ * @apiSuccess {Date} data.tools.updatedAt tool's updatedAt.
+ */
+router.get('/tool/all', getListTools);
 
 export default router;
