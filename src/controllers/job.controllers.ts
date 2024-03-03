@@ -112,4 +112,4 @@ const createNewJobWrapper: RequestHandler = async (req, res, next: NextFunction)
   });
 };
 
-export const createNewJob = requestHandler(createNewJobWrapper, { skipJwtAuth: false });
+export const createNewJob = requestHandler(createNewJobWrapper, { skipJwtAuth: true });

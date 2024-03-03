@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { requestHandler } from '../middleware/request.middleware';
 import { RequestHandler } from 'express';
 // const provinceHost = 'https://provinces.open-api.vn/api/';
 const provinceHost = 'https://vapi.vnappmob.com/api/province/district/';
@@ -9,7 +10,7 @@ const PROVINCE_CODE = {
   HA_NOI: 1,
 };
 
-export const getProvinces: RequestHandler = async (req, res) => {
+export const getDistricts: RequestHandler = async (req, res) => {
   const code = req.query.code || PROVINCE_CODE.DA_NANG;
   try {
     const response = await fetch(provinceHost + code);
@@ -28,3 +29,5 @@ export const getProvinces: RequestHandler = async (req, res) => {
     });
   }
 };
+
+export const getProvinces = requestHandler(getDistricts, { skipJwtAuth: true });
